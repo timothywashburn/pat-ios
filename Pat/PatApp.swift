@@ -4,7 +4,11 @@ import SwiftUI
 struct PatApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HomeView()
         }
     }
+}
+
+#Preview {
+    HomeView()
 }
