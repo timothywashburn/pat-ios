@@ -1,10 +1,3 @@
-//
-//  PatUITestsLaunchTests.swift
-//  PatUITests
-//
-//  Created by Timothy Washburn on 11/9/24.
-//
-
 import XCTest
 
 final class PatUITestsLaunchTests: XCTestCase {

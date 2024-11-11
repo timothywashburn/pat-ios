@@ -1,10 +1,3 @@
-//
-//  PatTests.swift
-//  PatTests
-//
-//  Created by Timothy Washburn on 11/9/24.
-//
-
 import Testing
 @testable import Pat
 
