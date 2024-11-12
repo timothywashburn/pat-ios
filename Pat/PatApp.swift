@@ -9,9 +9,11 @@ struct PatApp: App {
             if authState.isAuthenticated {
                 HomeView()
                     .environmentObject(authState)
+                    .preloadKeyboard()
             } else {
                 SignInView()
                     .environmentObject(authState)
+                    .preloadKeyboard()
             }
         }
     }
