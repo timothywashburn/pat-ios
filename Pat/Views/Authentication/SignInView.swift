@@ -1,63 +1,40 @@
 import SwiftUI
 
 struct SignInView: View {
+    @EnvironmentObject private var authState: AuthState
     @State private var email = ""
     @State private var password = ""
-    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        VStack(spacing: 24) {
-            CustomHeader(title: "Sign In", showAddButton: false)
-            
-            VStack(spacing: 32) {
-                Image(systemName: "person.circle.fill")
-                    .font(.system(size: 80))
-                    .foregroundColor(.blue)
+        NavigationView {
+            VStack(spacing: 20) {
+                Text("Welcome Back")
+                    .font(.system(size: 28, weight: .bold))
+                    .padding(.bottom, 30)
                 
-                VStack(spacing: 16) {
-                    AuthField(
-                        title: "Email",
-                        placeholder: "Enter your email",
-                        isSecure: false,
-                        text: $email
-                    )
-                    
-                    AuthField(
-                        title: "Password",
-                        placeholder: "Enter your password",
-                        isSecure: true,
-                        text: $password
-                    )
-                }
+                AuthField(title: "Email",
+                         placeholder: "Enter your email",
+                         isSecure: false,
+                         text: $email)
+                         
+                AuthField(title: "Password",
+                         placeholder: "Enter your password",
+                         isSecure: true,
+                         text: $password)
                 
                 AuthButton(title: "Sign In") {
-                    // Handle sign in
-                    print("Sign in tapped")
+                    authState.signIn(email: email, password: password)
                 }
                 
-                Button("Forgot Password?") {
-                    // Handle forgot password
-                    print("Forgot password tapped")
-                }
-                .foregroundColor(.blue)
+                Spacer()
                 
-                HStack {
-                    Text("Don't have an account?")
-                        .foregroundColor(.gray)
-                    Button("Create Account") {
-                        // Navigate to create account
-                        print("Navigate to create account")
-                    }
-                    .foregroundColor(.blue)
+                NavigationLink(destination: CreateAccountView()) {
+                    Text("Don't have an account? Create one")
+                        .foregroundColor(.blue)
                 }
+                .padding(.bottom)
             }
-            .padding(.top, 40)
-            
-            Spacer()
+            .padding()
         }
     }
-}
-
-#Preview {
-    SignInView()
 }

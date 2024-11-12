@@ -2,13 +2,31 @@ import SwiftUI
 
 @main
 struct PatApp: App {
+    @StateObject private var authState = AuthState()
+    
     var body: some Scene {
         WindowGroup {
-            HomeView()
+            if authState.isAuthenticated {
+                HomeView()
+                    .environmentObject(authState)
+            } else {
+                SignInView()
+                    .environmentObject(authState)
+            }
         }
     }
 }
 
-#Preview {
+#Preview("Logged In") {
     HomeView()
+        .environmentObject({
+            let auth = AuthState()
+            auth.isAuthenticated = true
+            return auth
+        }())
+}
+
+#Preview("Logged Out") {
+    SignInView()
+        .environmentObject(AuthState())
 }

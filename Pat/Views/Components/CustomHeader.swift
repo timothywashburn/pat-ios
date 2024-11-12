@@ -5,12 +5,6 @@ struct CustomHeader: View {
     let showAddButton: Bool
     let onAddTapped: () -> Void
     
-    init(title: String, showAddButton: Bool = false, onAddTapped: @escaping () -> Void = {}) {
-        self.title = title
-        self.showAddButton = showAddButton
-        self.onAddTapped = onAddTapped
-    }
-    
     var body: some View {
         HStack {
             Text(title)
@@ -23,8 +17,9 @@ struct CustomHeader: View {
                         .font(.system(size: 24))
                         .foregroundColor(.blue)
                 }
-                .padding(.trailing)
+                .padding(.trailing, 8)
             }
+            AccountButton()
         }
         .frame(height: 60)
         .background(Color(.systemBackground))
