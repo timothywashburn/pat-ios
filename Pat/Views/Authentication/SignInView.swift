@@ -4,6 +4,12 @@ struct SignInView: View {
     @EnvironmentObject private var authState: AuthState
     @State private var email = ""
     @State private var password = ""
+    @State private var isLoading = false
+    @State private var errorMessage: String?
+    
+    var isValidForm: Bool {
+        !email.isEmpty && !password.isEmpty
+    }
     
     var body: some View {
         NavigationView {
@@ -22,9 +28,33 @@ struct SignInView: View {
                          isSecure: true,
                          text: $password)
                 
-                AuthButton(title: "Sign In") {
-                    authState.signIn(email: email, password: password)
+                if let errorMessage {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .font(.subheadline)
                 }
+                
+                AuthButton(title: isLoading ? "Signing In..." : "Sign In") {
+                    Task {
+                        isLoading = true
+                        errorMessage = nil
+                        
+                        do {
+                            try await authState.signIn(email: email, password: password)
+                        } catch AuthError.serverError(let message) {
+                            errorMessage = message
+                        } catch AuthError.invalidResponse {
+                            errorMessage = "Invalid response from server"
+                        } catch AuthError.networkError {
+                            errorMessage = "Network error. Please try again"
+                        } catch {
+                            errorMessage = "An unexpected error occurred"
+                        }
+                        
+                        isLoading = false
+                    }
+                }
+                .disabled(!isValidForm || isLoading)
                 
                 Spacer()
                 
