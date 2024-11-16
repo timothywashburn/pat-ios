@@ -10,17 +10,30 @@ struct PatApp: App {
     
     var body: some Scene {
         WindowGroup {
-            if authState.isAuthenticated {
-                HomeView()
-                    .environmentObject(authState)
-                    .preloadKeyboard()
-            } else {
-                SignInView()
-                    .environmentObject(authState)
-                    .preloadKeyboard()
+            ZStack {
+                if authState.isLoading {
+                    LoadingView()
+                        .transition(.opacity)
+                } else if authState.isAuthenticated {
+                    HomeView()
+                        .environmentObject(authState)
+                        .preloadKeyboard()
+                        .transition(.opacity)
+                } else {
+                    SignInView()
+                        .environmentObject(authState)
+                        .preloadKeyboard()
+                        .transition(.opacity)
+                }
             }
+            .animation(.easeOut(duration: 0.3), value: authState.isLoading)
+            .animation(.easeOut(duration: 0.3), value: authState.isAuthenticated)
         }
     }
+}
+
+#Preview("Loading") {
+    LoadingView()
 }
 
 #Preview("Logged In") {

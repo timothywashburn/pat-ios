@@ -10,6 +10,7 @@ enum AuthError: Error {
 
 class AuthState: ObservableObject {
     @Published var isAuthenticated = false
+    @Published var isLoading = true
     private var userId: String?
     private let keychainHelper = KeychainHelper.standard
     private let tokenService = "dev.timothyw.pat"
@@ -57,6 +58,9 @@ class AuthState: ObservableObject {
               let refreshData = try? keychainHelper.read(service: tokenService, account: "refreshToken"),
               let auth = String(data: authData, encoding: .utf8),
               let refresh = String(data: refreshData, encoding: .utf8) else {
+            await MainActor.run {
+                self.isLoading = false
+            }
             return
         }
         
@@ -70,6 +74,11 @@ class AuthState: ObservableObject {
                 self.signOut()
             }
         } catch {
+            print("An error occurred: \(error)")
+        }
+        
+        await MainActor.run {
+            self.isLoading = false
         }
     }
     
@@ -196,5 +205,6 @@ class AuthState: ObservableObject {
         authToken = nil
         refreshToken = nil
         userId = nil
+        isLoading = false
     }
 }
