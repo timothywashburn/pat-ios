@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		1C86E62B2CE9C7B900ACBECC /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 1C86E62A2CE9C7B900ACBECC /* .gitignore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		1C1787EC2CDFDFF800C615D9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		1C1787DB2CDFDFF600C615D9 /* Pat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Pat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1C1787EB2CDFDFF800C615D9 /* PatTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PatTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1C1787F52CDFDFF800C615D9 /* PatUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PatUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1C86E62A2CE9C7B900ACBECC /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -92,6 +97,7 @@
 				1C1787EE2CDFDFF800C615D9 /* PatTests */,
 				1C1787F82CDFDFF800C615D9 /* PatUITests */,
 				1C1787DC2CDFDFF600C615D9 /* Products */,
+				1C86E62A2CE9C7B900ACBECC /* .gitignore */,
 			);
 			sourceTree = "<group>";
 		};
@@ -225,6 +231,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1C86E62B2CE9C7B900ACBECC /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -284,6 +291,8 @@
 /* Begin XCBuildConfiguration section */
 		1C1787FD2CDFDFF800C615D9 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 1C1787DD2CDFDFF600C615D9 /* Pat */;
+			baseConfigurationReferenceRelativePath = Config/Development.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -403,6 +412,8 @@
 		};
 		1C1788002CDFDFF800C615D9 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 1C1787DD2CDFDFF600C615D9 /* Pat */;
+			baseConfigurationReferenceRelativePath = Config/Development.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;

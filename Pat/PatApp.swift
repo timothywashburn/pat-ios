@@ -1,9 +1,5 @@
 import SwiftUI
 
-struct PatConfig {
-    static let apiURL = "https://mac.timothyw.dev"
-}
-
 @main
 struct PatApp: App {
     @StateObject private var authState = AuthState()
