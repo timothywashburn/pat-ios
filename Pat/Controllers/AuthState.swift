@@ -82,6 +82,14 @@ class AuthState: ObservableObject {
         }
     }
     
+    func refreshTokensIfNeeded() async throws {
+        guard refreshToken != nil else {
+            throw AuthError.refreshFailed
+        }
+        
+        try await refreshAuthToken()
+    }
+    
     private func refreshAuthToken() async throws {
         guard let refreshToken = self.refreshToken else {
             throw AuthError.refreshFailed

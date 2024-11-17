@@ -7,6 +7,7 @@ struct PatConfig {
 @main
 struct PatApp: App {
     @StateObject private var authState = AuthState()
+    @Environment(\.scenePhase) private var scenePhase
     
     var body: some Scene {
         WindowGroup {
@@ -28,6 +29,22 @@ struct PatApp: App {
             }
             .animation(.easeOut(duration: 0.3), value: authState.isLoading)
             .animation(.easeOut(duration: 0.3), value: authState.isAuthenticated)
+            .onChange(of: scenePhase) {
+                if scenePhase == .active && authState.isAuthenticated {
+                    Task {
+                        do {
+                            try await authState.refreshTokensIfNeeded()
+                        } catch {
+                            if case AuthError.refreshFailed = error {
+                                await MainActor.run {
+                                    authState.signOut()
+                                }
+                            }
+                            print("Token refresh error: \(error)")
+                        }
+                    }
+                }
+            }
         }
     }
 }
