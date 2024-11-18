@@ -9,41 +9,16 @@ enum AuthError: Error {
 }
 
 class AuthState: ObservableObject {
+    static let shared = AuthState()
+    
     @Published var isAuthenticated = false
     @Published var isLoading = true
-    private var userId: String?
+    private(set) var userId: String?
+    private(set) var authToken: String?
     private let keychainHelper = KeychainHelper.standard
     private let tokenService = "dev.timothyw.pat"
     
-    private var authToken: String? {
-        didSet {
-            do {
-                if let token = authToken {
-                    try keychainHelper.save(Data(token.utf8), service: tokenService, account: "authToken")
-                } else {
-                    try keychainHelper.delete(service: tokenService, account: "authToken")
-                }
-            } catch {
-                print("Keychain error saving auth token: \(error)")
-            }
-        }
-    }
-    
-    private var refreshToken: String? {
-        didSet {
-            do {
-                if let token = refreshToken {
-                    try keychainHelper.save(Data(token.utf8), service: tokenService, account: "refreshToken")
-                } else {
-                    try keychainHelper.delete(service: tokenService, account: "refreshToken")
-                }
-            } catch {
-                print("Keychain error saving refresh token: \(error)")
-            }
-        }
-    }
-    
-    init() {
+    private init() {
         Task {
             await loadAndValidateStoredTokens()
         }
@@ -79,6 +54,20 @@ class AuthState: ObservableObject {
         
         await MainActor.run {
             self.isLoading = false
+        }
+    }
+    
+    private var refreshToken: String? {
+        didSet {
+            do {
+                if let token = refreshToken {
+                    try keychainHelper.save(Data(token.utf8), service: tokenService, account: "refreshToken")
+                } else {
+                    try keychainHelper.delete(service: tokenService, account: "refreshToken")
+                }
+            } catch {
+                print("Keychain error saving refresh token: \(error)")
+            }
         }
     }
     

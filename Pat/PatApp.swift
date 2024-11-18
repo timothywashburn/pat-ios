@@ -2,7 +2,7 @@ import SwiftUI
 
 @main
 struct PatApp: App {
-    @StateObject private var authState = AuthState()
+    @StateObject private var authState = AuthState.shared
     @Environment(\.scenePhase) private var scenePhase
     
     var body: some Scene {
@@ -52,7 +52,7 @@ struct PatApp: App {
 #Preview("Logged In") {
     HomeView()
         .environmentObject({
-            let auth = AuthState()
+            let auth = AuthState.shared
             auth.isAuthenticated = true
             return auth
         }())
@@ -60,5 +60,5 @@ struct PatApp: App {
 
 #Preview("Logged Out") {
     SignInView()
-        .environmentObject(AuthState())
+        .environmentObject(AuthState.shared)
 }
