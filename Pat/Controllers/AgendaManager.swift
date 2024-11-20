@@ -17,6 +17,11 @@ struct AgendaItem: Identifiable, Codable {
 class AgendaManager: ObservableObject {
     private static var instance: AgendaManager?
     @Published var agendaItems: [AgendaItem] = []
+    private let dateFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
     
     static func getInstance() -> AgendaManager {
         if instance == nil {
@@ -44,8 +49,6 @@ class AgendaManager: ObservableObject {
               let taskData = responseData["tasks"] as? [[String: Any]] else {
             throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
         }
-        
-        let dateFormatter = ISO8601DateFormatter()
         
         let items = taskData.compactMap { task -> AgendaItem? in
             guard let id = task["_id"] as? String,
@@ -86,7 +89,7 @@ class AgendaManager: ObservableObject {
         
         let body: [String: Any] = [
             "name": name,
-            "dueDate": ISO8601DateFormatter().string(from: date),
+            "dueDate": dateFormatter.string(from: date),
             "notes": notes ?? "",
             "userId": AuthState.shared.userId ?? ""
         ]
@@ -109,7 +112,7 @@ class AgendaManager: ObservableObject {
         let agendaItem = AgendaItem(
             id: taskData["id"] as? String ?? "",
             name: taskData["name"] as? String ?? "",
-            date: ISO8601DateFormatter().date(from: taskData["dueDate"] as? String ?? "") ?? Date(),
+            date: (taskData["dueDate"] as? String).flatMap { dateFormatter.date(from: $0) },
             notes: taskData["notes"] as? String,
             completed: taskData["completed"] as? Bool ?? false
         )

@@ -6,6 +6,19 @@ struct AgendaPanel: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     
+    private var incompleteItems: [AgendaItem] {
+        agendaManager.agendaItems
+            .filter { !$0.completed }
+            .sorted { (item1, item2) in
+                guard let date1 = item1.date, let date2 = item2.date else {
+                    if item1.date == nil { return false }
+                    if item2.date == nil { return true }
+                    return false
+                }
+                return date1 < date2
+            }
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
             CustomHeader(title: "Agenda", showAddButton: true) {
@@ -21,9 +34,19 @@ struct AgendaPanel: View {
             if isLoading && agendaManager.agendaItems.isEmpty {
                 ProgressView()
                     .padding()
+            } else if incompleteItems.isEmpty {
+                VStack(spacing: 16) {
+                    Image(systemName: "checkmark.circle")
+                        .font(.system(size: 48))
+                        .foregroundColor(.gray)
+                    Text("No pending items")
+                        .font(.headline)
+                        .foregroundColor(.gray)
+                }
+                .frame(maxHeight: .infinity)
             } else {
                 List {
-                    ForEach(agendaManager.agendaItems) { item in
+                    ForEach(incompleteItems) { item in
                         AgendaItemView(item: item)
                             .listRowSeparator(.hidden)
                     }
