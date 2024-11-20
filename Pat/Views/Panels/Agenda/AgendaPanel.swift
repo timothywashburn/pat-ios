@@ -25,6 +25,7 @@ struct AgendaPanel: View {
                 List {
                     ForEach(agendaManager.agendaItems) { item in
                         AgendaItemView(item: item)
+                            .listRowSeparator(.hidden)
                     }
                 }
                 .listStyle(.plain)
