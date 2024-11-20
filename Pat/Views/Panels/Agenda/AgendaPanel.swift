@@ -22,20 +22,18 @@ struct AgendaPanel: View {
                 ProgressView()
                     .padding()
             } else {
-                ScrollView {
-                    RefreshControl(coordinateSpace: .named("refresh")) {
-                        await loadItems()
+                List {
+                    ForEach(agendaManager.agendaItems) { item in
+                        AgendaItemView(item: item)
                     }
-                    
-                    VStack(spacing: 20) {
-                        ForEach(agendaManager.agendaItems) { item in
-                            AgendaItemView(item: item)
-                                .padding(.horizontal)
-                        }
-                    }
-                    .padding(.top)
                 }
-                .coordinateSpace(name: "refresh")
+                .listStyle(.plain)
+                .refreshable {
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                    impactFeedback.prepare()
+                    impactFeedback.impactOccurred()
+                    await loadItems()
+                }
             }
         }
         .sheet(isPresented: $showingCreateSheet) {
@@ -57,43 +55,5 @@ struct AgendaPanel: View {
         }
         
         isLoading = false
-    }
-}
-
-struct RefreshControl: View {
-    var coordinateSpace: CoordinateSpace
-    var onRefresh: () async -> Void
-    
-    @State private var refreshing = false
-    @State private var threshold: CGFloat = 50
-    
-    var body: some View {
-        GeometryReader { geometry in
-            if geometry.frame(in: coordinateSpace).midY > threshold && !refreshing {
-                Spacer()
-                    .onAppear {
-                        refreshing = true
-                        Task {
-                            await onRefresh()
-                            refreshing = false
-                        }
-                    }
-            } else if geometry.frame(in: coordinateSpace).midY <= threshold {
-                Spacer()
-                    .onAppear {
-                        refreshing = false
-                    }
-            }
-            
-            HStack {
-                Spacer()
-                if refreshing {
-                    ProgressView()
-                }
-                Spacer()
-            }
-            .offset(y: min(geometry.frame(in: coordinateSpace).midY - threshold, 0))
-        }
-        .padding(.top, -threshold)
     }
 }
