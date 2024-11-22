@@ -5,6 +5,8 @@ struct AgendaPanel: View {
     @State private var showingCreateSheet = false
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var selectedTask: AgendaItem?
+    @State private var showingDetail = false
     
     private var incompleteItems: [AgendaItem] {
         agendaManager.agendaItems
@@ -49,6 +51,13 @@ struct AgendaPanel: View {
                     ForEach(incompleteItems) { item in
                         AgendaItemView(item: item)
                             .listRowSeparator(.hidden)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                selectedTask = item
+                                withAnimation(.spring()) {
+                                    showingDetail = true
+                                }
+                            }
                     }
                 }
                 .listStyle(.plain)
@@ -62,6 +71,12 @@ struct AgendaPanel: View {
         }
         .sheet(isPresented: $showingCreateSheet) {
             CreateAgendaItemView()
+        }
+        .overlay {
+            if showingDetail, let task = selectedTask {
+                AgendaDetailPanel(item: task, isPresented: $showingDetail)
+                    .transition(.move(edge: .trailing))
+            }
         }
         .task {
             await loadItems()
