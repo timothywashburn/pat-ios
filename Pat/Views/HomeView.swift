@@ -1,4 +1,3 @@
-// Views/HomeView.swift
 import SwiftUI
 
 struct HomeView: View {
@@ -9,17 +8,21 @@ struct HomeView: View {
         GeometryReader { geometry in
             VStack(spacing: 0) {
                 TabView(selection: $panelController.selectedPanel) {
-                    AgendaPanel()
-                        .tag(Panel.agenda)
-                    
-                    TasksPanel()
-                        .tag(Panel.tasks)
-                    
-                    InboxPanel()
-                        .tag(Panel.inbox)
-                    
-                    SettingsPanel()
-                        .tag(Panel.settings)
+                    ForEach(panelController.visiblePanels, id: \.self) { panel in
+                        Group {
+                            switch panel {
+                            case .agenda:
+                                AgendaPanel()
+                            case .tasks:
+                                TasksPanel()
+                            case .inbox:
+                                InboxPanel()
+                            case .settings:
+                                SettingsPanel()
+                            }
+                        }
+                        .tag(panel)
+                    }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .gesture(
@@ -32,7 +35,10 @@ struct HomeView: View {
                         }
                 )
                 
-                PanelNavigationBar(selectedPanel: $panelController.selectedPanel)
+                PanelNavigationBar(
+                    selectedPanel: $panelController.selectedPanel,
+                    visiblePanels: panelController.visiblePanels
+                )
             }
         }
     }

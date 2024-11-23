@@ -2,10 +2,11 @@ import SwiftUI
 
 struct PanelNavigationBar: View {
     @Binding var selectedPanel: Panel
+    let visiblePanels: [Panel]
     
     var body: some View {
         HStack {
-            ForEach(Panel.allCases, id: \.rawValue) { panel in
+            ForEach(visiblePanels, id: \.rawValue) { panel in
                 Spacer()
                 VStack {
                     Image(systemName: panel.icon)
