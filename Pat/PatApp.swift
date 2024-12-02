@@ -11,13 +11,17 @@ struct PatApp: App {
                 if authState.isLoading {
                     LoadingView()
                         .transition(.opacity)
-                } else if authState.isAuthenticated {
-                    HomeView()
+                } else if !authState.isAuthenticated {
+                    SignInView()
                         .environmentObject(authState)
                         .preloadKeyboard()
                         .transition(.opacity)
+                } else if !authState.isEmailVerified {
+                    VerifyEmailView()
+                        .environmentObject(authState)
+                        .transition(.opacity)
                 } else {
-                    SignInView()
+                    HomeView()
                         .environmentObject(authState)
                         .preloadKeyboard()
                         .transition(.opacity)
@@ -25,11 +29,13 @@ struct PatApp: App {
             }
             .animation(.easeOut(duration: 0.3), value: authState.isLoading)
             .animation(.easeOut(duration: 0.3), value: authState.isAuthenticated)
+            .animation(.easeOut(duration: 0.3), value: authState.isEmailVerified)
             .onChange(of: scenePhase) {
                 if scenePhase == .active && authState.isAuthenticated {
                     Task {
                         do {
                             try await authState.refreshTokensIfNeeded()
+                            try await authState.checkEmailVerification()
                         } catch {
                             if case AuthError.refreshFailed = error {
                                 await MainActor.run {
@@ -56,6 +62,11 @@ struct PatApp: App {
             auth.isAuthenticated = true
             return auth
         }())
+}
+
+#Preview("Not Verified") {
+    VerifyEmailView()
+        .environmentObject(AuthState.shared)
 }
 
 #Preview("Logged Out") {

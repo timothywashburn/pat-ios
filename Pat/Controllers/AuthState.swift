@@ -1,201 +1,194 @@
 import SwiftUI
 
-enum AuthError: Error {
-    case invalidResponse
-    case serverError(String)
-    case networkError(Error)
-    case keychainError(KeychainError)
-    case refreshFailed
-}
-
 class AuthState: ObservableObject {
     static let shared = AuthState()
     
     @Published var isAuthenticated = false
     @Published var isLoading = true
-    private(set) var authToken: String?
-    private let keychainHelper = KeychainHelper.standard
+    @Published private(set) var userInfo: UserInfo?
+    
+    private var tokens: AuthTokens?
+    private let keychain = KeychainHelper.standard
     private let tokenService = "dev.timothyw.pat"
+    
+    var authToken: String? {
+        tokens?.accessToken
+    }
+    
+    var isEmailVerified: Bool {
+        userInfo?.isEmailVerified ?? false
+    }
     
     private init() {
         Task {
-            await loadAndValidateStoredTokens()
+            await loadStoredAuth()
         }
     }
     
-    private func loadAndValidateStoredTokens() async {
-        let hasAuthToken = (try? keychainHelper.read(service: tokenService, account: "authToken")) != nil
-        let hasRefreshToken = (try? keychainHelper.read(service: tokenService, account: "refreshToken")) != nil
+    // MARK: - Auth Methods
+    
+    func signIn(email: String, password: String) async throws {
+        let request = NetworkRequest(
+            endpoint: "/api/auth/login",
+            method: .post,
+            body: ["email": email, "password": password]
+        )
         
-        guard hasAuthToken && hasRefreshToken,
-              let authData = try? keychainHelper.read(service: tokenService, account: "authToken"),
-              let refreshData = try? keychainHelper.read(service: tokenService, account: "refreshToken"),
-              let auth = String(data: authData, encoding: .utf8),
-              let refresh = String(data: refreshData, encoding: .utf8) else {
-            await MainActor.run {
-                self.isLoading = false
-            }
-            return
-        }
-        
-        self.authToken = auth
-        self.refreshToken = refresh
-        
-        do {
-            try await refreshAuthToken()
-        } catch AuthError.refreshFailed {
-            await MainActor.run {
-                self.signOut()
-            }
-        } catch {
-            print("An error occurred: \(error)")
-        }
+        let response = try await NetworkManager.shared.perform(request)
+        let loginData = try extractAuthData(from: response)
         
         await MainActor.run {
-            self.isLoading = false
-        }
-    }
-    
-    private var refreshToken: String? {
-        didSet {
-            do {
-                if let token = refreshToken {
-                    try keychainHelper.save(Data(token.utf8), service: tokenService, account: "refreshToken")
-                } else {
-                    try keychainHelper.delete(service: tokenService, account: "refreshToken")
-                }
-            } catch {
-                print("Keychain error saving refresh token: \(error)")
-            }
-        }
-    }
-    
-    func refreshTokensIfNeeded() async throws {
-        guard refreshToken != nil else {
-            throw AuthError.refreshFailed
-        }
-        
-        try await refreshAuthToken()
-    }
-    
-    private func refreshAuthToken() async throws {
-        guard let refreshToken = self.refreshToken else {
-            throw AuthError.refreshFailed
-        }
-        
-        let url = URL(string: "\(PatConfig.apiURL)/api/auth/refresh")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        let body = ["refreshToken": refreshToken]
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        
-        let (data, _) = try await URLSession.shared.data(for: request)
-        
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            throw AuthError.invalidResponse
-        }
-        
-        guard let success = json["success"] as? Bool,
-              let responseData = json["data"] as? [String: Any],
-              let newToken = responseData["token"] as? String,
-              let newRefreshToken = responseData["refreshToken"] as? String else {
-            throw AuthError.invalidResponse
-        }
-        
-        if !success {
-            throw AuthError.refreshFailed
-        }
-        
-        await MainActor.run {
-            self.authToken = newToken
-            self.refreshToken = newRefreshToken
-            self.isAuthenticated = true
+            updateAuthState(user: loginData.user, tokens: loginData.tokens)
         }
     }
     
     func createAccount(name: String, email: String, password: String) async throws {
-        let url = URL(string: "\(PatConfig.apiURL)/api/account/create")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let request = NetworkRequest(
+            endpoint: "/api/account/create",
+            method: .post,
+            body: ["name": name, "email": email, "password": password]
+        )
         
-        let body = [
-            "name": name,
-            "email": email,
-            "password": password
-        ]
+        _ = try await NetworkManager.shared.perform(request)
+        try await signIn(email: email, password: password)
+    }
+    
+    func checkEmailVerification() async throws {
+        guard let token = tokens?.accessToken else { return }
         
-        do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: body)
-            
-            let (data, _) = try await URLSession.shared.data(for: request)
-            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-            
-            guard let success = json?["success"] as? Bool else {
-                throw AuthError.invalidResponse
-            }
-            
-            if !success {
-                let errorMessage = (json?["error"] as? String) ?? "Failed to create account"
-                throw AuthError.serverError(errorMessage)
-            }
-            
-            try await signIn(email: email, password: password)
-            
-        } catch let error as AuthError {
-            throw error
-        } catch {
-            throw AuthError.networkError(error)
+        let request = NetworkRequest(
+            endpoint: "/api/account/status",
+            method: .get,
+            token: token
+        )
+        
+        let response = try await NetworkManager.shared.perform(request)
+        guard let userData = response["user"] as? [String: Any] else {
+            throw AuthError.invalidResponse
+        }
+        
+        let updatedUser = try decodeUser(from: userData)
+        
+        await MainActor.run {
+            self.userInfo = updatedUser
+            saveUserInfo(updatedUser)
         }
     }
     
-    func signIn(email: String, password: String) async throws {
-        let url = URL(string: "\(PatConfig.apiURL)/api/auth/login")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    func resendVerificationEmail() async throws {
+        guard let token = tokens?.accessToken else { return }
         
-        let body = ["email": email, "password": password]
+        let request = NetworkRequest(
+            endpoint: "/api/account/resend-verification",
+            method: .post,
+            token: token
+        )
         
-        do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: body)
-            
-            let (data, _) = try await URLSession.shared.data(for: request)
-            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-            
-            guard let success = json?["success"] as? Bool,
-                  let responseData = json?["data"] as? [String: Any],
-                  let token = responseData["token"] as? String,
-                  let refreshToken = responseData["refreshToken"] as? String,
-                  let user = responseData["user"] as? [String: Any],
-                  let userId = user["id"] as? String else {
-                throw AuthError.invalidResponse
-            }
-            
-            if !success {
-                let errorMessage = (json?["error"] as? String) ?? "Invalid credentials"
-                throw AuthError.serverError(errorMessage)
-            }
-            
-            await MainActor.run {
-                self.authToken = token
-                self.refreshToken = refreshToken
-                self.isAuthenticated = true
-            }
-            
-        } catch let error as AuthError {
-            throw error
-        } catch {
-            throw AuthError.networkError(error)
+        _ = try await NetworkManager.shared.perform(request)
+    }
+    
+    func refreshTokensIfNeeded() async throws {
+        guard let refreshToken = tokens?.refreshToken else {
+            throw AuthError.refreshFailed
+        }
+        
+        let request = NetworkRequest(
+            endpoint: "/api/auth/refresh",
+            method: .post,
+            body: ["refreshToken": refreshToken]
+        )
+        
+        let response = try await NetworkManager.shared.perform(request)
+        let authData = try extractAuthData(from: response)
+        
+        await MainActor.run {
+            updateAuthState(user: authData.user, tokens: authData.tokens)
         }
     }
     
     func signOut() {
+        clearAuthState()
+    }
+    
+    // MARK: - Private Methods
+    
+    private func loadStoredAuth() async {
+        do {
+            if let userData = try? keychain.read(service: tokenService, account: "userInfo") {
+                userInfo = try? JSONDecoder().decode(UserInfo.self, from: userData)
+            }
+            
+            if let tokenData = try? keychain.read(service: tokenService, account: "tokens") {
+                tokens = try? JSONDecoder().decode(AuthTokens.self, from: tokenData)
+                if tokens != nil {
+                    try await refreshTokensIfNeeded()
+                }
+            }
+        } catch {
+            clearAuthState()
+        }
+        
+        await MainActor.run {
+            self.isLoading = false
+            self.isAuthenticated = self.tokens != nil
+        }
+    }
+    
+    private func updateAuthState(user: UserInfo, tokens: AuthTokens) {
+        self.userInfo = user
+        self.tokens = tokens
+        self.isAuthenticated = true
+        
+        saveUserInfo(user)
+        saveTokens(tokens)
+    }
+    
+    private func clearAuthState() {
+        userInfo = nil
+        tokens = nil
         isAuthenticated = false
-        authToken = nil
-        refreshToken = nil
         isLoading = false
+        
+        try? keychain.delete(service: tokenService, account: "userInfo")
+        try? keychain.delete(service: tokenService, account: "tokens")
+    }
+    
+    private func saveUserInfo(_ user: UserInfo) {
+        guard let encoded = try? JSONEncoder().encode(user) else { return }
+        try? keychain.save(encoded, service: tokenService, account: "userInfo")
+    }
+    
+    private func saveTokens(_ tokens: AuthTokens) {
+        guard let encoded = try? JSONEncoder().encode(tokens) else { return }
+        try? keychain.save(encoded, service: tokenService, account: "tokens")
+    }
+    
+    private func decodeUser(from dictionary: [String: Any]) throws -> UserInfo {
+        guard let id = dictionary["id"] as? String,
+              let email = dictionary["email"] as? String,
+              let name = dictionary["name"] as? String,
+              let isEmailVerified = dictionary["isEmailVerified"] as? Bool else {
+            throw AuthError.invalidResponse
+        }
+        
+        return UserInfo(
+            id: id,
+            email: email,
+            name: name,
+            isEmailVerified: isEmailVerified
+        )
+    }
+    
+    private func extractAuthData(from response: [String: Any]) throws -> (user: UserInfo, tokens: AuthTokens) {
+        guard let userData = response["user"] as? [String: Any],
+              let token = response["token"] as? String,
+              let refreshToken = response["refreshToken"] as? String else {
+            throw AuthError.invalidResponse
+        }
+        
+        let user = try decodeUser(from: userData)
+        let tokens = AuthTokens(accessToken: token, refreshToken: refreshToken)
+        
+        return (user, tokens)
     }
 }
