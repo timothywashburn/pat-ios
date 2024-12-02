@@ -13,7 +13,6 @@ class AuthState: ObservableObject {
     
     @Published var isAuthenticated = false
     @Published var isLoading = true
-    private(set) var userId: String?
     private(set) var authToken: String?
     private let keychainHelper = KeychainHelper.standard
     private let tokenService = "dev.timothyw.pat"
@@ -101,9 +100,7 @@ class AuthState: ObservableObject {
         guard let success = json["success"] as? Bool,
               let responseData = json["data"] as? [String: Any],
               let newToken = responseData["token"] as? String,
-              let newRefreshToken = responseData["refreshToken"] as? String,
-              let user = responseData["user"] as? [String: Any],
-              let userId = user["id"] as? String else {
+              let newRefreshToken = responseData["refreshToken"] as? String else {
             throw AuthError.invalidResponse
         }
         
@@ -114,7 +111,6 @@ class AuthState: ObservableObject {
         await MainActor.run {
             self.authToken = newToken
             self.refreshToken = newRefreshToken
-            self.userId = userId
             self.isAuthenticated = true
         }
     }
@@ -186,7 +182,6 @@ class AuthState: ObservableObject {
             await MainActor.run {
                 self.authToken = token
                 self.refreshToken = refreshToken
-                self.userId = userId
                 self.isAuthenticated = true
             }
             
@@ -201,7 +196,6 @@ class AuthState: ObservableObject {
         isAuthenticated = false
         authToken = nil
         refreshToken = nil
-        userId = nil
         isLoading = false
     }
 }
