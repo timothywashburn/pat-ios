@@ -90,8 +90,7 @@ class AgendaManager: ObservableObject {
         let body: [String: Any] = [
             "name": name,
             "dueDate": dateFormatter.string(from: date),
-            "notes": notes ?? "",
-            "userId": AuthState.shared.userId ?? ""
+            "notes": notes ?? ""
         ]
         
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
