@@ -25,7 +25,7 @@ class PanelSettingsManager: ObservableObject {
     func loadPanelSettings() async {
         guard let token = AuthState.shared.authToken else { return }
         
-        let url = URL(string: "\(PatConfig.apiURL)/api/user/config")!
+        let url = URL(string: "\(PatConfig.apiURL)/api/account/config")!
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -71,7 +71,7 @@ class PanelSettingsManager: ObservableObject {
     func updatePanelSettings() async throws {
         guard let token = AuthState.shared.authToken else { return }
         
-        let url = URL(string: "\(PatConfig.apiURL)/api/user/config")!
+        let url = URL(string: "\(PatConfig.apiURL)/api/account/config")!
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")

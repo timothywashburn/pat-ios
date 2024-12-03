@@ -42,9 +42,9 @@ class AuthState: ObservableObject {
         }
     }
     
-    func createAccount(name: String, email: String, password: String) async throws {
+    func registerAccount(name: String, email: String, password: String) async throws {
         let request = NetworkRequest(
-            endpoint: "/api/account/create",
+            endpoint: "/api/auth/register",
             method: .post,
             body: ["name": name, "email": email, "password": password]
         )

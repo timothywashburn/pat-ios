@@ -58,7 +58,7 @@ struct CreateAccountView: View {
                     errorMessage = nil
                     
                     do {
-                        try await authState.createAccount(name: name, email: email, password: password)
+                        try await authState.registerAccount(name: name, email: email, password: password)
                     } catch AuthError.serverError(let message) {
                         errorMessage = message
                     } catch AuthError.invalidResponse {
