@@ -25,8 +25,6 @@ class AuthState: ObservableObject {
         }
     }
     
-    // MARK: - Auth Methods
-    
     func signIn(email: String, password: String) async throws {
         let request = NetworkRequest(
             endpoint: "/api/auth/login",
@@ -110,22 +108,22 @@ class AuthState: ObservableObject {
         clearAuthState()
     }
     
-    // MARK: - Private Methods
-    
     private func loadStoredAuth() async {
-        do {
-            if let userData = try? keychain.read(service: tokenService, account: "userInfo") {
-                userInfo = try? JSONDecoder().decode(UserInfo.self, from: userData)
+        if let userData = try? keychain.read(service: tokenService, account: "userInfo") {
+            do {
+                userInfo = try JSONDecoder().decode(UserInfo.self, from: userData)
+            } catch {
+                // Failed to decode user info
             }
-            
-            if let tokenData = try? keychain.read(service: tokenService, account: "tokens") {
-                tokens = try? JSONDecoder().decode(AuthTokens.self, from: tokenData)
-                if tokens != nil {
-                    try await refreshTokensIfNeeded()
-                }
+        }
+        
+        if let tokenData = try? keychain.read(service: tokenService, account: "tokens") {
+            do {
+                tokens = try JSONDecoder().decode(AuthTokens.self, from: tokenData)
+                try await refreshTokensIfNeeded()
+            } catch {
+                clearAuthState()
             }
-        } catch {
-            clearAuthState()
         }
         
         await MainActor.run {
@@ -180,6 +178,12 @@ class AuthState: ObservableObject {
     }
     
     private func extractAuthData(from response: [String: Any]) throws -> (user: UserInfo, tokens: AuthTokens) {
+        if let token = response["token"] as? String,
+           let refreshToken = response["refreshToken"] as? String,
+           let currentUser = userInfo {
+            return (currentUser, AuthTokens(accessToken: token, refreshToken: refreshToken))
+        }
+        
         guard let userData = response["user"] as? [String: Any],
               let token = response["token"] as? String,
               let refreshToken = response["refreshToken"] as? String else {
