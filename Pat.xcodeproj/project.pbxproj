@@ -6,10 +6,6 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		1C86E62B2CE9C7B900ACBECC /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 1C86E62A2CE9C7B900ACBECC /* .gitignore */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXContainerItemProxy section */
 		1C1787EC2CDFDFF800C615D9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -38,6 +34,12 @@
 		1C86E6292CE9A50000ACBECC /* Exceptions for "Pat" folder in "Pat" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				.idea/.gitignore,
+				.idea/modules.xml,
+				.idea/Pat.iml,
+				.idea/vcs.xml,
+				.idea/workspace.xml,
+				Config/Development.xcconfig,
 				Info.plist,
 			);
 			target = 1C1787DA2CDFDFF600C615D9 /* Pat */;
@@ -231,7 +233,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1C86E62B2CE9C7B900ACBECC /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
