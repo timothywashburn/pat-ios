@@ -54,15 +54,6 @@ struct VerifyEmailView: View {
             .padding(.top)
         }
         .padding()
-        .task {
-            // Check verification status periodically
-            while !authState.isEmailVerified {
-                try? await Task.sleep(nanoseconds: 5_000_000_000) // 5 seconds
-                if !Task.isCancelled {
-                    try? await authState.checkEmailVerification()
-                }
-            }
-        }
     }
     
     private func resendVerification() async {

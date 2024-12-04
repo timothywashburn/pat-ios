@@ -1,10 +1,10 @@
 import Foundation
 
 struct UserInfo: Codable {
-    let id: String
-    let email: String
-    let name: String
-    let isEmailVerified: Bool
+    var id: String
+    var email: String
+    var name: String
+    var isEmailVerified: Bool
 }
 
 enum AuthError: Error {

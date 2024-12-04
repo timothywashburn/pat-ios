@@ -38,7 +38,6 @@ struct PatApp: App {
                         Task {
                             do {
                                 try await authState.refreshTokensIfNeeded()
-                                try await authState.checkEmailVerification()
                             } catch {
                                 if case AuthError.refreshFailed = error {
                                     await MainActor.run {

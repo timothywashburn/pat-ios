@@ -51,28 +51,6 @@ class AuthState: ObservableObject {
         try await signIn(email: email, password: password)
     }
     
-    func checkEmailVerification() async throws {
-        guard let token = tokens?.accessToken else { return }
-        
-        let request = NetworkRequest(
-            endpoint: "/api/account/status",
-            method: .get,
-            token: token
-        )
-        
-        let response = try await NetworkManager.shared.perform(request)
-        guard let userData = response["user"] as? [String: Any] else {
-            throw AuthError.invalidResponse
-        }
-        
-        let updatedUser = try decodeUser(from: userData)
-        
-        await MainActor.run {
-            self.userInfo = updatedUser
-            saveUserInfo(updatedUser)
-        }
-    }
-    
     func resendVerificationEmail() async throws {
         guard let token = tokens?.accessToken else { return }
         
@@ -106,6 +84,13 @@ class AuthState: ObservableObject {
     
     func signOut() {
         clearAuthState()
+    }
+    
+    func updateUserInfo(_ update: (inout UserInfo) -> Void) {
+        guard var currentUser = userInfo else { return }
+        update(&currentUser)
+        self.userInfo = currentUser
+        saveUserInfo(currentUser)
     }
     
     private func loadStoredAuth() async {
