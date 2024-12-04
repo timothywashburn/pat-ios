@@ -3,93 +3,115 @@ import SocketIO
 
 class RealTimeManager: ObservableObject {
     static let shared = RealTimeManager()
-
+    @Published var isConnected = false
+    
     private var manager: SocketManager?
     private var socket: SocketIOClient?
-    @Published var isConnected = false
     private var messageId: Int = 0
+    private var reconnectTimer: Timer?
     
-    func setupWebSocket() {
-        guard let token = AuthState.shared.authToken else {
-            print("Socket.IO setup skipped: no auth token available")
-            return
-        }
-        
-        let baseURL = PatConfig.apiURL.replacingOccurrences(of: "http://", with: "ws://")
-            .replacingOccurrences(of: "https://", with: "wss://")
-        
-        // Replace with your custom Socket.IO path if needed
-        let socketURL = URL(string: "\(baseURL)/socket.io")!
-        
-        manager = SocketManager(socketURL: socketURL, config: [
-            .log(true),
-            .compress,
-            .extraHeaders(["Authorization": "Bearer \(token)"]),
-            .path("/ws") // Custom WebSocket path if required
-        ])
-        
-        socket = manager?.defaultSocket
-        
-        setupHandlers()
-    }
+    // MARK: - Public Methods
     
     func connect() {
+        if socket == nil {
+            setupWebSocket()
+        }
+        
         guard let socket = socket else {
-            print("Socket.IO connection skipped: not initialized")
+            NSLog("[socket] connection skipped: not initialized")
+            return
+        }
+        if socket.status == .connected {
+            NSLog("[socket] already connected")
             return
         }
         
-        print("Connecting to Socket.IO server...")
+        NSLog("[socket] connecting...")
         socket.connect()
     }
     
     func disconnect() {
         guard let socket = socket else {
-            print("Socket.IO disconnection skipped: not initialized")
+            NSLog("[socket] disconnection skipped: not initialized")
             return
         }
-        
-        print("Disconnecting from Socket.IO server...")
+        NSLog("[socket] disconnecting...")
         socket.disconnect()
         isConnected = false
     }
     
-    private func setupHandlers() {
-        guard let socket = socket else {
-            print("Socket.IO handlers setup skipped: not initialized")
+    // MARK: - Private Setup
+    
+    private func setupWebSocket() {
+        guard let token = AuthState.shared.authToken else {
+            NSLog("[socket] setup skipped: no auth token")
             return
         }
         
-        // Connection event
+        disconnect()
+        
+        let baseURL = PatConfig.apiURL
+        let socketURL = URL(string: baseURL)!
+        
+        var urlComponents = URLComponents(url: socketURL, resolvingAgainstBaseURL: true)!
+        urlComponents.queryItems = [URLQueryItem(name: "token", value: token)]
+        
+        NSLog("[socket] initializing with url: \(baseURL)")
+        
+        manager = SocketManager(socketURL: socketURL, config: [
+            .compress,
+            .connectParams(["token": token]),
+            .extraHeaders(["Authorization": "Bearer \(token)"]),
+            .path("/ws"),
+            .reconnects(true),
+            .reconnectAttempts(-1),
+            .reconnectWait(5000)
+        ])
+        
+        socket = manager?.defaultSocket
+        setupHandlers()
+    }
+    
+    private func setupHandlers() {
+        guard let socket = socket else {
+            NSLog("[socket] handlers setup skipped: not initialized")
+            return
+        }
+        
         socket.on(clientEvent: .connect) { [weak self] _, _ in
-            print("Socket.IO connected")
-            self?.isConnected = true
+            NSLog("[socket] connected")
+            self?.updateConnectionState(true)
             
-            // Start sending heartbeat every 25 seconds
-            Timer.scheduledTimer(withTimeInterval: 25, repeats: true) { [weak self] _ in
+            self?.reconnectTimer?.invalidate()
+            self?.reconnectTimer = Timer.scheduledTimer(withTimeInterval: 25, repeats: true) { [weak self] _ in
                 self?.sendHeartbeat()
             }
         }
         
-        // Disconnection event
         socket.on(clientEvent: .disconnect) { [weak self] _, _ in
-            print("Socket.IO disconnected")
-            self?.handleDisconnect()
+            NSLog("[socket] disconnected")
+            self?.updateConnectionState(false)
         }
         
-        // Error event
         socket.on(clientEvent: .error) { data, _ in
             if let error = data.first as? String {
-                print("Socket.IO error: \(error)")
+                NSLog("[socket] error:", error)
             }
         }
         
-        // Custom message handler
         socket.on("message") { [weak self] data, _ in
             if let message = data.first as? String {
-                print("Received message: \(message)")
+                NSLog("[socket] received message:", message)
                 self?.handleMessage(message)
             }
+        }
+    }
+    
+    // MARK: - Private Helpers
+    
+    private func updateConnectionState(_ connected: Bool) {
+        DispatchQueue.main.async { [weak self] in
+            self?.isConnected = connected
         }
     }
     
@@ -105,20 +127,8 @@ class RealTimeManager: ObservableObject {
             return
         }
         
-        print("Sending heartbeat: \(message)")
+        NSLog("[socket] sending heartbeat:", message)
         socket?.emit("heartbeat", message)
-    }
-    
-    private func handleDisconnect() {
-        print("Handling Socket.IO disconnection...")
-        DispatchQueue.main.async {
-            self.isConnected = false
-            print("Attempting to reconnect in 5 seconds...")
-            
-            DispatchQueue.global().asyncAfter(deadline: .now() + 5) {
-                self.connect()
-            }
-        }
     }
     
     private func handleMessage(_ text: String) {
@@ -131,10 +141,10 @@ class RealTimeManager: ObservableObject {
         Task { @MainActor in
             switch event {
             case "emailVerified":
-                print("Handling emailVerified event")
+                NSLog("[socket] handling emailVerified event")
                 try? await AuthState.shared.checkEmailVerification()
             default:
-                print("Unhandled event: \(event)")
+                NSLog("[socket] unhandled event:", event)
             }
         }
     }

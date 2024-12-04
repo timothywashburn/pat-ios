@@ -38,11 +38,6 @@
 		1C86E6292CE9A50000ACBECC /* Exceptions for "Pat" folder in "Pat" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				.idea/.gitignore,
-				.idea/modules.xml,
-				.idea/Pat.iml,
-				.idea/vcs.xml,
-				.idea/workspace.xml,
 				Config/Development.xcconfig,
 				Info.plist,
 			);
