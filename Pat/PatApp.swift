@@ -3,7 +3,7 @@ import SwiftUI
 @main
 struct PatApp: App {
     @StateObject private var authState = AuthState.shared
-    @StateObject private var realTimeManager = RealTimeManager.shared
+    @StateObject private var socketService = SocketService.shared
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
@@ -49,16 +49,16 @@ struct PatApp: App {
                         }
                     }
                 case .background:
-                    realTimeManager.disconnect()
+                    socketService.disconnect()
                 default:
                     break
                 }
             }
             .onChange(of: authState.isAuthenticated, initial: true) { oldValue, newValue in
                 if newValue {
-                    realTimeManager.connect()
+                    socketService.connect()
                 } else if oldValue {
-                    realTimeManager.disconnect()
+                    socketService.disconnect()
                 }
             }
         }

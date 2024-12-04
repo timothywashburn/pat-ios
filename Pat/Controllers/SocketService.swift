@@ -9,8 +9,8 @@ struct SocketMessage<T: Codable>: Codable {
 
 struct EmptyData: Codable {}
 
-class RealTimeManager: ObservableObject {
-    static let shared = RealTimeManager()
+class SocketService: ObservableObject {
+    static let shared = SocketService()
     @Published var isConnected = false
     
     private var manager: SocketManager?
