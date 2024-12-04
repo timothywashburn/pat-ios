@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		1C953C912CFFE11800F08DA8 /* SocketIO in Frameworks */ = {isa = PBXBuildFile; productRef = 1C953C902CFFE11800F08DA8 /* SocketIO */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		1C1787EC2CDFDFF800C615D9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -72,6 +76,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1C953C912CFFE11800F08DA8 /* SocketIO in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -133,6 +138,7 @@
 			);
 			name = Pat;
 			packageProductDependencies = (
+				1C953C902CFFE11800F08DA8 /* SocketIO */,
 			);
 			productName = Pat;
 			productReference = 1C1787DB2CDFDFF600C615D9 /* Pat.app */;
@@ -216,6 +222,9 @@
 			);
 			mainGroup = 1C1787D22CDFDFF600C615D9;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				1C953C8F2CFFE07E00F08DA8 /* XCRemoteSwiftPackageReference "socket" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1C1787DC2CDFDFF600C615D9 /* Products */;
 			projectDirPath = "";
@@ -591,6 +600,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		1C953C8F2CFFE07E00F08DA8 /* XCRemoteSwiftPackageReference "socket" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/socketio/socket.io-client-swift";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1C953C902CFFE11800F08DA8 /* SocketIO */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1C953C8F2CFFE07E00F08DA8 /* XCRemoteSwiftPackageReference "socket" */;
+			productName = SocketIO;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1C1787D32CDFDFF600C615D9 /* Project object */;
 }

@@ -77,7 +77,7 @@ class AuthState: ObservableObject {
         guard let token = tokens?.accessToken else { return }
         
         let request = NetworkRequest(
-            endpoint: "/api/account/resend-verification",
+            endpoint: "/api/auth/resend-verification",
             method: .post,
             token: token
         )
