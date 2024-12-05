@@ -45,26 +45,30 @@ class PanelSettingsManager: ObservableObject {
             }
             
             await MainActor.run {
-                var panelVisibility: [String: Bool] = [:]
+                let panelMap = Dictionary(uniqueKeysWithValues: Panel.allCases.map { ($0.title.lowercased(), $0) })
+                
+                var newPanels: [PanelSetting] = []
                 for setting in panelSettings {
                     if let panelName = setting["panel"] as? String,
-                       let visible = setting["visible"] as? Bool {
-                        panelVisibility[panelName] = visible
+                       let visible = setting["visible"] as? Bool,
+                       let panel = panelMap[panelName] {
+                        newPanels.append(PanelSetting(panel: panel, visible: visible))
                     }
                 }
                 
-                self.panels = self.panels.map { setting in
-                    let panelName = setting.panel.title.lowercased()
-                    if let visible = panelVisibility[panelName] {
-                        return PanelSetting(panel: setting.panel, visible: visible)
+                let configuredPanelNames = Set(newPanels.map { $0.panel.title.lowercased() })
+                for panel in Panel.allCases {
+                    let panelName = panel.title.lowercased()
+                    if !configuredPanelNames.contains(panelName) {
+                        newPanels.append(PanelSetting(panel: panel, visible: true))
                     }
-                    return setting
                 }
                 
+                self.panels = newPanels
                 NotificationCenter.default.post(name: NSNotification.Name("PanelSettingsChanged"), object: nil)
             }
         } catch {
-            print("Error loading panel settings: \(error)")
+            print("error loading panel settings: \(error)")
         }
     }
     

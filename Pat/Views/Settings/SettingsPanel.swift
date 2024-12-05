@@ -22,46 +22,89 @@ struct SettingsPanel: View {
                 }
                 
                 List {
-                    ForEach(settingsManager.panels) { panelSetting in
-                        HStack {
-                            Image(systemName: panelSetting.panel.icon)
-                                .foregroundColor(.blue)
-                                .frame(width: 30)
-                            
-                            Text(panelSetting.panel.title)
-                            
-                            Spacer()
-                            
-                            Toggle("", isOn: Binding(
-                                get: { panelSetting.visible },
-                                set: { newValue in
-                                    if let index = settingsManager.panels.firstIndex(where: { $0.id == panelSetting.id }) {
-                                        settingsManager.panels[index].visible = newValue
-                                        Task {
-                                            do {
-                                                try await settingsManager.updatePanelSettings()
-                                            } catch {
-                                                errorMessage = error.localizedDescription
-                                            }
+                    Section(header: Text("Visible Panels")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .textCase(nil)) {
+                        ForEach(settingsManager.panels.filter { $0.visible }) { panelSetting in
+                            PanelRow(panelSetting: panelSetting) {
+                                if let index = settingsManager.panels.firstIndex(where: { $0.id == panelSetting.id }) {
+                                    // First, mark as invisible
+                                    settingsManager.panels[index].visible = false
+                                    
+                                    // Then reorganize the entire array
+                                    let visiblePanels = settingsManager.panels.filter { $0.visible }
+                                    let hiddenPanels = settingsManager.panels.filter { !$0.visible }
+                                    settingsManager.panels = visiblePanels + hiddenPanels
+                                    
+                                    Task {
+                                        do {
+                                            try await settingsManager.updatePanelSettings()
+                                        } catch {
+                                            errorMessage = error.localizedDescription
                                         }
                                     }
                                 }
-                            ))
+                            }
                         }
-                        .padding(.vertical, 8)
+                        .onMove { source, destination in
+                            var visiblePanels = settingsManager.panels.filter { $0.visible }
+                            visiblePanels.move(fromOffsets: source, toOffset: destination)
+                            
+                            let hiddenPanels = settingsManager.panels.filter { !$0.visible }
+                            settingsManager.panels = visiblePanels + hiddenPanels
+                            
+                            Task {
+                                do {
+                                    try await settingsManager.updatePanelSettings()
+                                } catch {
+                                    errorMessage = error.localizedDescription
+                                }
+                            }
+                        }
                     }
-                    .onMove { from, to in
-                        settingsManager.panels.move(fromOffsets: from, toOffset: to)
-                        Task {
-                            do {
-                                try await settingsManager.updatePanelSettings()
-                            } catch {
-                                errorMessage = error.localizedDescription
+                    
+                    Section(header: Text("Hidden Panels")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .textCase(nil)) {
+                        ForEach(settingsManager.panels.filter { !$0.visible }) { panelSetting in
+                            PanelRow(panelSetting: panelSetting) {
+                                if let index = settingsManager.panels.firstIndex(where: { $0.id == panelSetting.id }) {
+                                    settingsManager.panels[index].visible = true
+                                    
+                                    let visiblePanels = settingsManager.panels.filter { $0.visible }
+                                    let hiddenPanels = settingsManager.panels.filter { !$0.visible }
+                                    settingsManager.panels = visiblePanels + hiddenPanels
+                                    
+                                    Task {
+                                        do {
+                                            try await settingsManager.updatePanelSettings()
+                                        } catch {
+                                            errorMessage = error.localizedDescription
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        .onMove { source, destination in
+                            var hiddenPanels = settingsManager.panels.filter { !$0.visible }
+                            hiddenPanels.move(fromOffsets: source, toOffset: destination)
+                            
+                            let visiblePanels = settingsManager.panels.filter { $0.visible }
+                            settingsManager.panels = visiblePanels + hiddenPanels
+                            
+                            Task {
+                                do {
+                                    try await settingsManager.updatePanelSettings()
+                                } catch {
+                                    errorMessage = error.localizedDescription
+                                }
                             }
                         }
                     }
                 }
-                .listStyle(.plain)
+                .listStyle(.insetGrouped)
                 .environment(\.editMode, .constant(.active))
                 .frame(minHeight: 300)
             }
@@ -69,5 +112,28 @@ struct SettingsPanel: View {
             
             Spacer()
         }
+    }
+}
+
+struct PanelRow: View {
+    let panelSetting: PanelSettingsManager.PanelSetting
+    let toggleAction: () -> Void
+    
+    var body: some View {
+        HStack {
+            Image(systemName: panelSetting.panel.icon)
+                .foregroundColor(.blue)
+                .frame(width: 30)
+            
+            Text(panelSetting.panel.title)
+            
+            Spacer()
+            
+            Button(action: toggleAction) {
+                Image(systemName: panelSetting.visible ? "eye" : "eye.slash")
+                    .foregroundColor(.blue)
+            }
+        }
+        .padding(.vertical, 8)
     }
 }
