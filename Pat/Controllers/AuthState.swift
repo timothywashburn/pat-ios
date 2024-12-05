@@ -89,14 +89,20 @@ class AuthState: ObservableObject {
     func updateUserInfo(_ update: (inout UserInfo) -> Void) {
         guard var currentUser = userInfo else { return }
         update(&currentUser)
-        self.userInfo = currentUser
-        saveUserInfo(currentUser)
+        
+        Task { @MainActor in
+            self.userInfo = currentUser
+            saveUserInfo(currentUser)
+        }
     }
     
     private func loadStoredAuth() async {
         if let userData = try? keychain.read(service: tokenService, account: "userInfo") {
             do {
-                userInfo = try JSONDecoder().decode(UserInfo.self, from: userData)
+                let decodedUser = try JSONDecoder().decode(UserInfo.self, from: userData)
+                await MainActor.run {
+                    self.userInfo = decodedUser
+                }
             } catch {
                 // Failed to decode user info
             }
@@ -104,16 +110,24 @@ class AuthState: ObservableObject {
         
         if let tokenData = try? keychain.read(service: tokenService, account: "tokens") {
             do {
-                tokens = try JSONDecoder().decode(AuthTokens.self, from: tokenData)
+                let decodedTokens = try JSONDecoder().decode(AuthTokens.self, from: tokenData)
+                await MainActor.run {
+                    self.tokens = decodedTokens
+                }
+                
                 try await refreshTokensIfNeeded()
+                await MainActor.run {
+                    self.isAuthenticated = true
+                }
             } catch {
-                clearAuthState()
+                await MainActor.run {
+                    clearAuthState()
+                }
             }
         }
         
         await MainActor.run {
             self.isLoading = false
-            self.isAuthenticated = self.tokens != nil
         }
     }
     
