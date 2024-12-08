@@ -1,11 +1,16 @@
 import SwiftUI
 
 struct TasksPanel: View {
+    @Binding var showHamburgerMenu: Bool
+    
     var body: some View {
         VStack(spacing: 0) {
-            CustomHeader(title: "Tasks", showAddButton: true) {
-                print("Add tapped")  // Placeholder action
-            }
+            CustomHeader(
+                title: "Tasks",
+                showAddButton: true,
+                onAddTapped: { print("Add tapped") },
+                showHamburgerMenu: $showHamburgerMenu
+            )
             
             ScrollView {
                 VStack(spacing: 20) {

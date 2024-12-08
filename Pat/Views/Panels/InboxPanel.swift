@@ -1,11 +1,16 @@
 import SwiftUI
 
 struct InboxPanel: View {
+    @Binding var showHamburgerMenu: Bool
+    
     var body: some View {
         VStack(spacing: 0) {
-            CustomHeader(title: "Inbox", showAddButton: true) {
-                print("Add tapped")  // Placeholder action
-            }
+            CustomHeader(
+                title: "Inbox",
+                showAddButton: true,
+                onAddTapped: { print("Add tapped") },
+                showHamburgerMenu: $showHamburgerMenu
+            )
             
             ScrollView {
                 VStack(spacing: 20) {

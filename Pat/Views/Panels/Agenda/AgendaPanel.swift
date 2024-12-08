@@ -7,6 +7,7 @@ struct AgendaPanel: View {
     @State private var errorMessage: String?
     @State private var selectedTask: AgendaItem?
     @State private var showingDetail = false
+    @Binding var showHamburgerMenu: Bool
     
     private var incompleteItems: [AgendaItem] {
         agendaManager.agendaItems
@@ -23,9 +24,12 @@ struct AgendaPanel: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            CustomHeader(title: "Agenda", showAddButton: true) {
-                showingCreateSheet = true
-            }
+            CustomHeader(
+                title: "Agenda",
+                showAddButton: true,
+                onAddTapped: { showingCreateSheet = true },
+                showHamburgerMenu: $showHamburgerMenu
+            )
             
             if let errorMessage {
                 Text(errorMessage)

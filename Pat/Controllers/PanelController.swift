@@ -1,9 +1,18 @@
 import SwiftUI
 
 class PanelController: ObservableObject {
-    @Published var selectedPanel: Panel = .agenda
+    @Published var selectedPanel: Panel = .agenda {
+        didSet {
+            NSLog("[controller] selected panel changed from \(oldValue) to \(selectedPanel)")
+        }
+    }
     @Published var panelSettings: [Panel: Bool] = [:]
     @Published var panelOrder: [Panel] = []
+    
+    func setSelectedPanel(_ panel: Panel) {
+        NSLog("[controller] setting selected panel from \(selectedPanel) to \(panel)")
+        selectedPanel = panel
+    }
     
     init() {
         // Initialize with default settings from PanelSettingsManager

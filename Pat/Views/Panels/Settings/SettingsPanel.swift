@@ -3,12 +3,16 @@ import SwiftUI
 struct SettingsPanel: View {
     @StateObject private var settingsManager = PanelSettingsManager.shared
     @State private var errorMessage: String?
+    @Binding var showHamburgerMenu: Bool
     
     var body: some View {
         VStack(spacing: 0) {
-            CustomHeader(title: "Settings", showAddButton: false) {
-                // No add action needed
-            }
+            CustomHeader(
+                title: "Settings",
+                showAddButton: false,
+                onAddTapped: { },
+                showHamburgerMenu: $showHamburgerMenu
+            )
             
             VStack(alignment: .leading, spacing: 16) {
                 Text("Panel Management")
