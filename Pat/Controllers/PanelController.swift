@@ -15,10 +15,8 @@ class PanelController: ObservableObject {
     }
     
     init() {
-        // Initialize with default settings from PanelSettingsManager
         updateFromSettings()
         
-        // Observe PanelSettingsManager changes
         NotificationCenter.default.addObserver(self,
                                             selector: #selector(settingsChanged),
                                             name: NSNotification.Name("PanelSettingsChanged"),
@@ -34,7 +32,6 @@ class PanelController: ObservableObject {
         panelSettings = Dictionary(uniqueKeysWithValues: settings.map { ($0.panel, $0.visible) })
         panelOrder = settings.map(\.panel)
         
-        // If selected panel is hidden, select first visible panel
         if let isSelectedVisible = panelSettings[selectedPanel], !isSelectedVisible {
             selectedPanel = panelOrder.first(where: { panelSettings[$0] == true }) ?? .agenda
         }
