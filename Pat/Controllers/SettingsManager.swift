@@ -1,9 +1,10 @@
 import SwiftUI
 
-class PanelSettingsManager: ObservableObject {
-    static let shared = PanelSettingsManager()
+class SettingsManager: ObservableObject {
+    static let shared = SettingsManager()
     @Published var panels: [PanelSetting] = []
     @Published var isLoaded = false
+    @Published private(set) var config: [String: Any] = [:]
     
     struct PanelSetting: Identifiable, Equatable {
         let id = UUID()
@@ -15,7 +16,9 @@ class PanelSettingsManager: ObservableObject {
         }
     }
     
-    func loadPanelSettings() async throws {
+    private init() {}
+    
+    func loadConfig() async throws {
         guard let token = AuthState.shared.authToken else {
             throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No auth token"])
         }
@@ -36,39 +39,18 @@ class PanelSettingsManager: ObservableObject {
               let success = json["success"] as? Bool,
               let responseData = json["data"] as? [String: Any],
               let userData = responseData["user"] as? [String: Any],
-              let iosApp = userData["iosApp"] as? [String: Any],
-              let panelSettings = iosApp["panels"] as? [[String: Any]],
               success else {
             throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response data"])
         }
         
         await MainActor.run {
-            let panelMap = Dictionary(uniqueKeysWithValues: Panel.allCases.map { ($0.title.lowercased(), $0) })
-            
-            var newPanels: [PanelSetting] = []
-            for setting in panelSettings {
-                if let panelName = setting["panel"] as? String,
-                   let visible = setting["visible"] as? Bool,
-                   let panel = panelMap[panelName] {
-                    newPanels.append(PanelSetting(panel: panel, visible: visible))
-                }
-            }
-            
-            let configuredPanelNames = Set(newPanels.map { $0.panel.title.lowercased() })
-            for panel in Panel.allCases {
-                let panelName = panel.title.lowercased()
-                if !configuredPanelNames.contains(panelName) {
-                    newPanels.append(PanelSetting(panel: panel, visible: true))
-                }
-            }
-            
-            self.panels = newPanels
+            self.config = userData
+            updatePanelsFromConfig()
             self.isLoaded = true
-            NotificationCenter.default.post(name: NSNotification.Name("PanelSettingsChanged"), object: nil)
         }
     }
     
-    func updatePanelSettings() async throws {
+    func updateConfig(_ newConfig: [String: Any]) async throws {
         guard let token = AuthState.shared.authToken else {
             throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No auth token"])
         }
@@ -78,21 +60,7 @@ class PanelSettingsManager: ObservableObject {
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        
-        let panelConfig = panels.map { setting -> [String: Any] in
-            return [
-                "panel": setting.panel.title.lowercased(),
-                "visible": setting.visible
-            ]
-        }
-        
-        let body: [String: Any] = [
-            "iosApp": [
-                "panels": panelConfig
-            ]
-        ]
-        
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        request.httpBody = try JSONSerialization.data(withJSONObject: newConfig)
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
@@ -106,11 +74,60 @@ class PanelSettingsManager: ObservableObject {
               let success = json["success"] as? Bool,
               success else {
             throw NSError(domain: "", code: -1,
-                        userInfo: [NSLocalizedDescriptionKey: "Failed to update panel settings"])
+                        userInfo: [NSLocalizedDescriptionKey: "Failed to update configuration"])
         }
         
         await MainActor.run {
-            NotificationCenter.default.post(name: NSNotification.Name("PanelSettingsChanged"), object: nil)
+            self.config = newConfig
+            updatePanelsFromConfig()
+            NotificationCenter.default.post(name: NSNotification.Name("SettingsChanged"), object: nil)
         }
+    }
+    
+    // Panel-specific methods
+    private func updatePanelsFromConfig() {
+        guard let iosApp = config["iosApp"] as? [String: Any],
+              let panelSettings = iosApp["panels"] as? [[String: Any]] else {
+            return
+        }
+        
+        let panelMap = Dictionary(uniqueKeysWithValues: Panel.allCases.map { ($0.title.lowercased(), $0) })
+        
+        var newPanels: [PanelSetting] = []
+        for setting in panelSettings {
+            if let panelName = setting["panel"] as? String,
+               let visible = setting["visible"] as? Bool,
+               let panel = panelMap[panelName] {
+                newPanels.append(PanelSetting(panel: panel, visible: visible))
+            }
+        }
+        
+        let configuredPanelNames = Set(newPanels.map { $0.panel.title.lowercased() })
+        for panel in Panel.allCases {
+            let panelName = panel.title.lowercased()
+            if !configuredPanelNames.contains(panelName) {
+                newPanels.append(PanelSetting(panel: panel, visible: true))
+            }
+        }
+        
+        self.panels = newPanels
+        NotificationCenter.default.post(name: NSNotification.Name("PanelSettingsChanged"), object: nil)
+    }
+    
+    func updatePanelSettings() async throws {
+        let panelConfig = panels.map { setting -> [String: Any] in
+            return [
+                "panel": setting.panel.title.lowercased(),
+                "visible": setting.visible
+            ]
+        }
+        
+        let newConfig: [String: Any] = [
+            "iosApp": [
+                "panels": panelConfig
+            ]
+        ]
+        
+        try await updateConfig(newConfig)
     }
 }

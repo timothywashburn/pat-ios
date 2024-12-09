@@ -4,16 +4,9 @@ class PanelController: ObservableObject {
     @Published var selectedPanel: Panel = .agenda
     @Published var panelSettings: [Panel: Bool] = [:]
     @Published var panelOrder: [Panel] = []
-    @Published var isLoading = true
-    
-    func setSelectedPanel(_ panel: Panel) {
-        selectedPanel = panel
-    }
     
     init() {
-        Task {
-            await loadInitialSettings()
-        }
+        updateFromSettings(isInitialLoad: true)
         
         NotificationCenter.default.addObserver(self,
                                             selector: #selector(settingsChanged),
@@ -21,20 +14,8 @@ class PanelController: ObservableObject {
                                             object: nil)
     }
     
-    private func loadInitialSettings() async {
-        let settingsManager = PanelSettingsManager.shared
-        
-        do {
-            try await settingsManager.loadPanelSettings()
-            await MainActor.run {
-                updateFromSettings(isInitialLoad: true)
-                isLoading = false
-            }
-        } catch {
-            await MainActor.run {
-                isLoading = false
-            }
-        }
+    func setSelectedPanel(_ panel: Panel) {
+        selectedPanel = panel
     }
     
     @objc private func settingsChanged() {
@@ -42,7 +23,7 @@ class PanelController: ObservableObject {
     }
     
     private func updateFromSettings(isInitialLoad: Bool) {
-        let settings = PanelSettingsManager.shared.panels
+        let settings = SettingsManager.shared.panels
         panelSettings = Dictionary(uniqueKeysWithValues: settings.map { ($0.panel, $0.visible) })
         panelOrder = settings.map(\.panel)
         

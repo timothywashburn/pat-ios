@@ -4,8 +4,9 @@ import SwiftUI
 struct PatApp: App {
     @StateObject private var authState = AuthState.shared
     @StateObject private var socketService = SocketService.shared
+    @StateObject private var settingsManager = SettingsManager.shared
     @Environment(\.scenePhase) private var scenePhase
-
+    
     var body: some Scene {
         WindowGroup {
             ZStack {
@@ -38,13 +39,14 @@ struct PatApp: App {
                         Task {
                             do {
                                 try await authState.refreshTokensIfNeeded()
+                                try await settingsManager.loadConfig()
                             } catch {
                                 if case AuthError.refreshFailed = error {
                                     await MainActor.run {
                                         authState.signOut()
                                     }
                                 }
-                                print("Token refresh error: \(error)")
+                                print("token refresh error: \(error)")
                             }
                         }
                     }
@@ -57,6 +59,13 @@ struct PatApp: App {
             .onChange(of: authState.isAuthenticated, initial: true) { oldValue, newValue in
                 if newValue {
                     socketService.connect()
+                    Task {
+                        do {
+                            try await settingsManager.loadConfig()
+                        } catch {
+                            print("settings load error: \(error)")
+                        }
+                    }
                 } else if oldValue {
                     socketService.disconnect()
                 }

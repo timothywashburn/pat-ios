@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SettingsPanel: View {
-    @StateObject private var settingsManager = PanelSettingsManager.shared
+    @StateObject private var settingsManager = SettingsManager.shared
     @State private var errorMessage: String?
     @Binding var showHamburgerMenu: Bool
     
@@ -126,7 +126,7 @@ struct SettingsPanel: View {
 }
 
 struct PanelRow: View {
-    let panelSetting: PanelSettingsManager.PanelSetting
+    let panelSetting: SettingsManager.PanelSetting
     let onToggle: () -> Void
     
     var body: some View {

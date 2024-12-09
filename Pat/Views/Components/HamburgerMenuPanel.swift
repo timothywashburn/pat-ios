@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct HamburgerMenuPanel: View {
-    @StateObject private var settingsManager = PanelSettingsManager.shared
+    @StateObject private var settingsManager = SettingsManager.shared
     @ObservedObject var panelController: PanelController
     @Binding var isPresented: Bool
     @Binding var selectedPanel: Panel
