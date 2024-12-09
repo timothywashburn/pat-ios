@@ -11,7 +11,6 @@ class PanelController: ObservableObject {
     }
     
     init() {
-        NSLog("[panel-controller] initializing")
         Task {
             await loadInitialSettings()
         }
@@ -23,18 +22,15 @@ class PanelController: ObservableObject {
     }
     
     private func loadInitialSettings() async {
-        NSLog("[panel-controller] starting initial settings load")
         let settingsManager = PanelSettingsManager.shared
         
         do {
             try await settingsManager.loadPanelSettings()
             await MainActor.run {
-                updateFromSettings()
+                updateFromSettings(isInitialLoad: true)
                 isLoading = false
-                NSLog("[panel-controller] finished initial load")
             }
         } catch {
-            NSLog("[panel-controller] failed to load initial settings: \(error.localizedDescription)")
             await MainActor.run {
                 isLoading = false
             }
@@ -42,19 +38,17 @@ class PanelController: ObservableObject {
     }
     
     @objc private func settingsChanged() {
-        NSLog("[panel-controller] received settings changed notification")
-        updateFromSettings()
+        updateFromSettings(isInitialLoad: false)
     }
     
-    private func updateFromSettings() {
+    private func updateFromSettings(isInitialLoad: Bool) {
         let settings = PanelSettingsManager.shared.panels
         panelSettings = Dictionary(uniqueKeysWithValues: settings.map { ($0.panel, $0.visible) })
         panelOrder = settings.map(\.panel)
         
-        if !panelSettings[selectedPanel, default: false] {
+        if isInitialLoad {
             if let firstVisible = panelOrder.first(where: { panelSettings[$0] == true }) {
                 selectedPanel = firstVisible
-                NSLog("[panel-controller] updated selected panel to: \(firstVisible)")
             }
         }
     }
@@ -74,12 +68,10 @@ class PanelController: ObservableObject {
             if dragDistance > 0 && currentIndex > 0 {
                 withAnimation {
                     selectedPanel = visiblePanels[currentIndex - 1]
-                    NSLog("[panel-controller] swiped to previous panel: \(visiblePanels[currentIndex - 1])")
                 }
             } else if dragDistance < 0 && currentIndex < visiblePanels.count - 1 {
                 withAnimation {
                     selectedPanel = visiblePanels[currentIndex + 1]
-                    NSLog("[panel-controller] swiped to next panel: \(visiblePanels[currentIndex + 1])")
                 }
             }
         }
