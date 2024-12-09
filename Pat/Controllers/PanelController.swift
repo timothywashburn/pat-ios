@@ -1,16 +1,11 @@
 import SwiftUI
 
 class PanelController: ObservableObject {
-    @Published var selectedPanel: Panel = .agenda {
-        didSet {
-            NSLog("[controller] selected panel changed from \(oldValue) to \(selectedPanel)")
-        }
-    }
+    @Published var selectedPanel: Panel = .agenda
     @Published var panelSettings: [Panel: Bool] = [:]
     @Published var panelOrder: [Panel] = []
     
     func setSelectedPanel(_ panel: Panel) {
-        NSLog("[controller] setting selected panel from \(selectedPanel) to \(panel)")
         selectedPanel = panel
     }
     
@@ -32,8 +27,11 @@ class PanelController: ObservableObject {
         panelSettings = Dictionary(uniqueKeysWithValues: settings.map { ($0.panel, $0.visible) })
         panelOrder = settings.map(\.panel)
         
-        if let isSelectedVisible = panelSettings[selectedPanel], !isSelectedVisible {
-            selectedPanel = panelOrder.first(where: { panelSettings[$0] == true }) ?? .agenda
+        // Update selected panel only if not already set to a visible panel
+        if !panelSettings[selectedPanel, default: false] {
+            if let firstVisible = panelOrder.first(where: { panelSettings[$0] == true }) {
+                selectedPanel = firstVisible
+            }
         }
     }
     

@@ -5,6 +5,7 @@ class PanelSettingsManager: ObservableObject {
     @Published var panels: [PanelSetting] = Panel.allCases.map { panel in
         PanelSetting(panel: panel, visible: true)
     }
+    @Published var isLoaded = false
     
     struct PanelSetting: Identifiable, Equatable {
         let id = UUID()
@@ -65,10 +66,15 @@ class PanelSettingsManager: ObservableObject {
                 }
                 
                 self.panels = newPanels
+                self.isLoaded = true
                 NotificationCenter.default.post(name: NSNotification.Name("PanelSettingsChanged"), object: nil)
             }
         } catch {
             print("error loading panel settings: \(error)")
+            // Set isLoaded even on error to prevent UI from hanging
+            await MainActor.run {
+                self.isLoaded = true
+            }
         }
     }
     

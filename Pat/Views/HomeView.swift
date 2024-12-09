@@ -2,11 +2,23 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject private var panelController = PanelController()
+    @StateObject private var settingsManager = PanelSettingsManager.shared
     @GestureState private var dragOffset: CGFloat = 0
     @State private var showHamburgerMenu = false
     @State private var menuShadowOpacity = 0.0
     
     var body: some View {
+        Group {
+            if settingsManager.isLoaded {
+                mainContent
+            } else {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+    }
+    
+    private var mainContent: some View {
         ZStack {
             Color(.systemBackground)
                 .ignoresSafeArea()
