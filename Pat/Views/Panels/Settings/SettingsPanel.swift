@@ -31,25 +31,28 @@ struct SettingsPanel: View {
                         .foregroundColor(.secondary)
                         .textCase(nil)) {
                         ForEach(settingsManager.panels.filter { $0.visible }) { panelSetting in
-                            PanelRow(panelSetting: panelSetting) {
-                                if let index = settingsManager.panels.firstIndex(where: { $0.id == panelSetting.id }) {
-                                    // First, mark as invisible
-                                    settingsManager.panels[index].visible = false
-                                    
-                                    // Then reorganize the entire array
-                                    let visiblePanels = settingsManager.panels.filter { $0.visible }
-                                    let hiddenPanels = settingsManager.panels.filter { !$0.visible }
-                                    settingsManager.panels = visiblePanels + hiddenPanels
-                                    
-                                    Task {
-                                        do {
-                                            try await settingsManager.updatePanelSettings()
-                                        } catch {
-                                            errorMessage = error.localizedDescription
+                            PanelRow(
+                                panelSetting: panelSetting,
+                                onToggle: {
+                                    if let index = settingsManager.panels.firstIndex(where: { $0.id == panelSetting.id }) {
+                                        // First, mark as invisible
+                                        settingsManager.panels[index].visible = false
+                                        
+                                        // Then reorganize the entire array
+                                        let visiblePanels = settingsManager.panels.filter { $0.visible }
+                                        let hiddenPanels = settingsManager.panels.filter { !$0.visible }
+                                        settingsManager.panels = visiblePanels + hiddenPanels
+                                        
+                                        Task {
+                                            do {
+                                                try await settingsManager.updatePanelSettings()
+                                            } catch {
+                                                errorMessage = error.localizedDescription
+                                            }
                                         }
                                     }
                                 }
-                            }
+                            )
                         }
                         .onMove { source, destination in
                             var visiblePanels = settingsManager.panels.filter { $0.visible }
@@ -73,23 +76,26 @@ struct SettingsPanel: View {
                         .foregroundColor(.secondary)
                         .textCase(nil)) {
                         ForEach(settingsManager.panels.filter { !$0.visible }) { panelSetting in
-                            PanelRow(panelSetting: panelSetting) {
-                                if let index = settingsManager.panels.firstIndex(where: { $0.id == panelSetting.id }) {
-                                    settingsManager.panels[index].visible = true
-                                    
-                                    let visiblePanels = settingsManager.panels.filter { $0.visible }
-                                    let hiddenPanels = settingsManager.panels.filter { !$0.visible }
-                                    settingsManager.panels = visiblePanels + hiddenPanels
-                                    
-                                    Task {
-                                        do {
-                                            try await settingsManager.updatePanelSettings()
-                                        } catch {
-                                            errorMessage = error.localizedDescription
+                            PanelRow(
+                                panelSetting: panelSetting,
+                                onToggle: {
+                                    if let index = settingsManager.panels.firstIndex(where: { $0.id == panelSetting.id }) {
+                                        settingsManager.panels[index].visible = true
+                                        
+                                        let visiblePanels = settingsManager.panels.filter { $0.visible }
+                                        let hiddenPanels = settingsManager.panels.filter { !$0.visible }
+                                        settingsManager.panels = visiblePanels + hiddenPanels
+                                        
+                                        Task {
+                                            do {
+                                                try await settingsManager.updatePanelSettings()
+                                            } catch {
+                                                errorMessage = error.localizedDescription
+                                            }
                                         }
                                     }
                                 }
-                            }
+                            )
                         }
                         .onMove { source, destination in
                             var hiddenPanels = settingsManager.panels.filter { !$0.visible }
@@ -121,7 +127,7 @@ struct SettingsPanel: View {
 
 struct PanelRow: View {
     let panelSetting: PanelSettingsManager.PanelSetting
-    let toggleAction: () -> Void
+    let onToggle: () -> Void
     
     var body: some View {
         HStack {
@@ -133,11 +139,13 @@ struct PanelRow: View {
             
             Spacer()
             
-            Button(action: toggleAction) {
+            Button(action: onToggle) {
                 Image(systemName: panelSetting.visible ? "eye" : "eye.slash")
                     .foregroundColor(.blue)
             }
+            .buttonStyle(.plain)
         }
         .padding(.vertical, 8)
+        .contentShape(Rectangle())
     }
 }
