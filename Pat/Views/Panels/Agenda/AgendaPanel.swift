@@ -8,10 +8,11 @@ struct AgendaPanel: View {
     @State private var selectedTask: AgendaItem?
     @State private var showingDetail = false
     @Binding var showHamburgerMenu: Bool
+    @State private var showCompleted = false
     
-    private var incompleteItems: [AgendaItem] {
+    private var filteredItems: [AgendaItem] {
         agendaManager.agendaItems
-            .filter { !$0.completed }
+            .filter { showCompleted == $0.completed }
             .sorted { (item1, item2) in
                 guard let date1 = item1.date, let date2 = item2.date else {
                     if item1.date == nil { return false }
@@ -28,6 +29,9 @@ struct AgendaPanel: View {
                 title: "Agenda",
                 showAddButton: true,
                 onAddTapped: { showingCreateSheet = true },
+                showFilterButton: true,
+                isFilterActive: showCompleted,
+                onFilterTapped: { withAnimation { showCompleted.toggle() } },
                 showHamburgerMenu: $showHamburgerMenu
             )
             
@@ -40,19 +44,19 @@ struct AgendaPanel: View {
             if isLoading && agendaManager.agendaItems.isEmpty {
                 ProgressView()
                     .padding()
-            } else if incompleteItems.isEmpty {
+            } else if filteredItems.isEmpty {
                 VStack(spacing: 16) {
                     Image(systemName: "checkmark.circle")
                         .font(.system(size: 48))
                         .foregroundColor(.gray)
-                    Text("No pending items")
+                    Text(showCompleted ? "No completed items" : "No pending items")
                         .font(.headline)
                         .foregroundColor(.gray)
                 }
                 .frame(maxHeight: .infinity)
             } else {
                 List {
-                    ForEach(incompleteItems) { item in
+                    ForEach(filteredItems) { item in
                         AgendaItemView(item: item)
                             .listRowSeparator(.hidden)
                             .contentShape(Rectangle())

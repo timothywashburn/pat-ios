@@ -2,6 +2,8 @@ import SwiftUI
 
 struct AgendaItemView: View {
     let item: AgendaItem
+    @StateObject private var agendaManager = AgendaManager.getInstance()
+    @State private var isLoading = false
     
     private var formattedDate: String {
         guard let date = item.date else { return "" }
@@ -26,25 +28,50 @@ struct AgendaItemView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(item.name)
-                .font(.headline)
-            
-            if !formattedDate.isEmpty {
-                HStack {
-                    Image(systemName: "clock")
-                        .foregroundColor(.blue)
-                    Text(formattedDate)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+        HStack(spacing: 12) {
+            Button {
+                Task {
+                    isLoading = true
+                    do {
+                        try await agendaManager.setCompleted(item.id, completed: !item.completed)
+                    } catch {
+                        print("failed to update completion status: \(error.localizedDescription)")
+                    }
+                    isLoading = false
+                }
+            } label: {
+                if isLoading {
+                    ProgressView()
+                        .frame(width: 24, height: 24)
+                } else {
+                    Image(systemName: item.completed ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 24))
+                        .foregroundColor(item.completed ? .green : .gray)
                 }
             }
+            .disabled(isLoading)
+            .buttonStyle(BorderlessButtonStyle())
             
-            if let notes = item.notes, !notes.isEmpty {
-                Text(notes)
-                    .font(.body)
-                    .foregroundColor(.secondary)
-                    .lineLimit(2)
+            VStack(alignment: .leading, spacing: 8) {
+                Text(item.name)
+                    .font(.headline)
+                
+                if !formattedDate.isEmpty {
+                    HStack {
+                        Image(systemName: "clock")
+                            .foregroundColor(.blue)
+                        Text(formattedDate)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                if let notes = item.notes, !notes.isEmpty {
+                    Text(notes)
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

@@ -4,6 +4,9 @@ struct CustomHeader: View {
     let title: String
     let showAddButton: Bool
     let onAddTapped: () -> Void
+    var showFilterButton = false
+    var isFilterActive = false
+    var onFilterTapped: (() -> Void)?
     @Binding var showHamburgerMenu: Bool
     
     var body: some View {
@@ -24,6 +27,17 @@ struct CustomHeader: View {
                 .padding(.leading, 8)
             
             Spacer()
+            
+            if showFilterButton {
+                Button(action: {
+                    onFilterTapped?()
+                }) {
+                    Image(systemName: isFilterActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                        .font(.system(size: 24))
+                        .foregroundColor(.blue)
+                }
+                .padding(.trailing, 8)
+            }
             
             if showAddButton {
                 Button(action: onAddTapped) {
