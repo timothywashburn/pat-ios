@@ -25,7 +25,7 @@ struct HomeView: View {
             
             VStack(spacing: 0) {
                 TabView(selection: $panelController.selectedPanel) {
-                    ForEach(panelController.panelOrder, id: \.self) { panel in
+                    ForEach(panelController.currentPanels, id: \.self) { panel in
                         Group {
                             switch panel {
                             case .agenda:
@@ -47,13 +47,10 @@ struct HomeView: View {
                         .updating($dragOffset) { value, state, _ in
                             state = value.translation.width
                         }
-                        .onEnded { value in
-                            panelController.handlePanelSwipe(value)
-                        }
                 )
                 
                 PanelNavigationBar(
-                    selectedPanel: $panelController.selectedPanel,
+                    panelController: panelController,
                     visiblePanels: panelController.visiblePanels
                 )
             }

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PanelNavigationBar: View {
-    @Binding var selectedPanel: Panel
+    @ObservedObject var panelController: PanelController
     let visiblePanels: [Panel]
     
     var body: some View {
@@ -14,11 +14,9 @@ struct PanelNavigationBar: View {
                     Text(panel.title)
                         .font(.caption)
                 }
-                .foregroundColor(selectedPanel == panel ? .blue : .gray)
+                .foregroundColor(panelController.selectedPanel == panel ? .blue : .gray)
                 .onTapGesture {
-                    withAnimation {
-                        selectedPanel = panel
-                    }
+                    panelController.setSelectedPanel(panel)
                 }
                 Spacer()
             }
