@@ -148,4 +148,61 @@ class AgendaManager: ObservableObject {
         
         try await loadAgendaItems()
     }
+    
+    func updateAgendaItem(_ id: String, name: String?, date: Date?, notes: String?) async throws {
+        guard let token = AuthState.shared.authToken else {
+            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Not authenticated"])
+        }
+        
+        let url = URL(string: "\(PatConfig.apiURL)/api/tasks/\(id)")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        var body: [String: Any] = [:]
+        if let name = name { body["name"] = name }
+        body["dueDate"] = date.map { dateFormatter.string(from: $0) }
+        if let notes = notes { body["notes"] = notes }
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        let (data, _) = try await URLSession.shared.data(for: request)
+        
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let success = json["success"] as? Bool else {
+            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
+        }
+        
+        guard success else {
+            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: json["error"] as? String ?? "Unknown error"])
+        }
+        
+        try await loadAgendaItems()
+    }
+    
+    func deleteAgendaItem(_ id: String) async throws {
+        guard let token = AuthState.shared.authToken else {
+            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Not authenticated"])
+        }
+        
+        let url = URL(string: "\(PatConfig.apiURL)/api/tasks/\(id)")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        let (data, _) = try await URLSession.shared.data(for: request)
+        
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let success = json["success"] as? Bool else {
+            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
+        }
+        
+        guard success else {
+            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: json["error"] as? String ?? "Unknown error"])
+        }
+        
+        try await loadAgendaItems()
+    }
 }
