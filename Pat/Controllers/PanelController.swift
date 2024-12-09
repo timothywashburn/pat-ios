@@ -4,13 +4,17 @@ class PanelController: ObservableObject {
     @Published var selectedPanel: Panel = .agenda
     @Published var panelSettings: [Panel: Bool] = [:]
     @Published var panelOrder: [Panel] = []
+    @Published var isLoading = true
     
     func setSelectedPanel(_ panel: Panel) {
         selectedPanel = panel
     }
     
     init() {
-        updateFromSettings()
+        NSLog("[panel-controller] initializing")
+        Task {
+            await loadInitialSettings()
+        }
         
         NotificationCenter.default.addObserver(self,
                                             selector: #selector(settingsChanged),
@@ -18,7 +22,27 @@ class PanelController: ObservableObject {
                                             object: nil)
     }
     
+    private func loadInitialSettings() async {
+        NSLog("[panel-controller] starting initial settings load")
+        let settingsManager = PanelSettingsManager.shared
+        
+        do {
+            try await settingsManager.loadPanelSettings()
+            await MainActor.run {
+                updateFromSettings()
+                isLoading = false
+                NSLog("[panel-controller] finished initial load")
+            }
+        } catch {
+            NSLog("[panel-controller] failed to load initial settings: \(error.localizedDescription)")
+            await MainActor.run {
+                isLoading = false
+            }
+        }
+    }
+    
     @objc private func settingsChanged() {
+        NSLog("[panel-controller] received settings changed notification")
         updateFromSettings()
     }
     
@@ -27,10 +51,10 @@ class PanelController: ObservableObject {
         panelSettings = Dictionary(uniqueKeysWithValues: settings.map { ($0.panel, $0.visible) })
         panelOrder = settings.map(\.panel)
         
-        // Update selected panel only if not already set to a visible panel
         if !panelSettings[selectedPanel, default: false] {
             if let firstVisible = panelOrder.first(where: { panelSettings[$0] == true }) {
                 selectedPanel = firstVisible
+                NSLog("[panel-controller] updated selected panel to: \(firstVisible)")
             }
         }
     }
@@ -50,10 +74,12 @@ class PanelController: ObservableObject {
             if dragDistance > 0 && currentIndex > 0 {
                 withAnimation {
                     selectedPanel = visiblePanels[currentIndex - 1]
+                    NSLog("[panel-controller] swiped to previous panel: \(visiblePanels[currentIndex - 1])")
                 }
             } else if dragDistance < 0 && currentIndex < visiblePanels.count - 1 {
                 withAnimation {
                     selectedPanel = visiblePanels[currentIndex + 1]
+                    NSLog("[panel-controller] swiped to next panel: \(visiblePanels[currentIndex + 1])")
                 }
             }
         }
