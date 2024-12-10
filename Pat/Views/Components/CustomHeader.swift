@@ -8,19 +8,23 @@ struct CustomHeader: View {
     var isFilterActive = false
     var onFilterTapped: (() -> Void)?
     @Binding var showHamburgerMenu: Bool
+    var trailing: (() -> AnyView)? = nil
+    @Environment(\.editMode) private var editMode
     
     var body: some View {
         HStack {
-            Button(action: {
-                withAnimation {
-                    showHamburgerMenu = true
+            if editMode?.wrappedValue.isEditing != true {
+                Button(action: {
+                    withAnimation {
+                        showHamburgerMenu = true
+                    }
+                }) {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.system(size: 24))
+                        .foregroundColor(.blue)
                 }
-            }) {
-                Image(systemName: "line.3.horizontal")
-                    .font(.system(size: 24))
-                    .foregroundColor(.blue)
+                .padding(.leading, 8)
             }
-            .padding(.leading, 8)
             
             Text(title)
                 .font(.system(size: 28, weight: .bold))
@@ -39,6 +43,11 @@ struct CustomHeader: View {
                 .padding(.trailing, 8)
             }
             
+            if let trailing = trailing {
+                trailing()
+                    .padding(.trailing, 8)
+            }
+            
             if showAddButton {
                 Button(action: onAddTapped) {
                     Image(systemName: "plus.circle.fill")
@@ -48,7 +57,9 @@ struct CustomHeader: View {
                 .padding(.trailing, 8)
             }
             
-            AccountButton()
+            if editMode?.wrappedValue.isEditing != true {
+                AccountButton()
+            }
         }
         .frame(height: 60)
         .background(Color(.systemBackground))

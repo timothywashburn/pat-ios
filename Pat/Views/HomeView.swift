@@ -6,6 +6,7 @@ struct HomeView: View {
     @GestureState private var dragOffset: CGFloat = 0
     @State private var showHamburgerMenu = false
     @State private var menuShadowOpacity = 0.0
+    @State private var settingsEditMode: EditMode = .inactive
     
     var body: some View {
         Group {
@@ -35,7 +36,7 @@ struct HomeView: View {
                             case .inbox:
                                 InboxPanel(showHamburgerMenu: $showHamburgerMenu)
                             case .settings:
-                                SettingsPanel(showHamburgerMenu: $showHamburgerMenu)
+                                SettingsPanel(editMode: $settingsEditMode, showHamburgerMenu: $showHamburgerMenu)
                             }
                         }
                         .tag(panel)
@@ -49,10 +50,12 @@ struct HomeView: View {
                         }
                 )
                 
-                PanelNavigationBar(
-                    panelController: panelController,
-                    visiblePanels: panelController.visiblePanels
-                )
+                if !settingsEditMode.isEditing {
+                    PanelNavigationBar(
+                        panelController: panelController,
+                        visiblePanels: panelController.visiblePanels
+                    )
+                }
             }
             
             ZStack {

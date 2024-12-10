@@ -20,21 +20,23 @@ struct PanelRow: View {
             }
             .buttonStyle(.plain)
         }
-        .contentShape(Rectangle())
     }
 }
 
 struct SettingsItemRow: View {
     let title: String
     let onDelete: () -> Void
+    @Environment(\.editMode) private var editMode
     
     var body: some View {
         HStack {
             Text(title)
             Spacer()
-            Button(action: onDelete) {
-                Image(systemName: "minus.circle.fill")
-                    .foregroundColor(.red)
+            if editMode?.wrappedValue.isEditing == true {
+                Button(action: onDelete) {
+                    Image(systemName: "minus.circle.fill")
+                        .foregroundColor(.red)
+                }
             }
         }
     }

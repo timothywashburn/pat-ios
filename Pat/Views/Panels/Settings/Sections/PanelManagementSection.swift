@@ -3,49 +3,63 @@ import SwiftUI
 struct PanelManagementSection: View {
     @StateObject private var settingsManager = SettingsManager.shared
     @Binding var errorMessage: String?
+    @Environment(\.editMode) private var editMode
     
     var body: some View {
-        Section {
-            Text("Panel Management")
-                .font(.headline)
-                .foregroundColor(.primary)
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-                .textCase(nil)
-        }
-        
-        Section(header:
+        Section(header: Text("Panel Arrangement")
+                .textCase(.none)
+                .font(.system(size: 16))) {
             Text("Visible Panels")
-                .font(.subheadline)
                 .foregroundColor(.secondary)
-                .textCase(nil)
-        ) {
             ForEach(settingsManager.panels.filter { $0.visible }, id: \.id) { panelSetting in
-                PanelRow(
-                    panelSetting: panelSetting,
-                    onToggle: {
-                        togglePanel(panelSetting, visible: false)
+                HStack {
+                    Image(systemName: panelSetting.panel.icon)
+                        .foregroundColor(.blue)
+                        .frame(width: 30)
+                    
+                    Text(panelSetting.panel.title)
+                    
+                    Spacer()
+                    
+                    if editMode?.wrappedValue.isEditing == true {
+                        Button(action: {
+                            togglePanel(panelSetting, visible: false)
+                        }) {
+                            Image(systemName: "eye.slash")
+                                .foregroundColor(.blue)
+                        }
+                        .buttonStyle(.plain)
                     }
-                )
+                }
             }
             .onMove { source, destination in
                 movePanels(source: source, destination: destination, visible: true)
             }
         }
         
-        Section(header:
+        Section {
             Text("Hidden Panels")
-                .font(.subheadline)
                 .foregroundColor(.secondary)
-                .textCase(nil)
-        ) {
             ForEach(settingsManager.panels.filter { !$0.visible }, id: \.id) { panelSetting in
-                PanelRow(
-                    panelSetting: panelSetting,
-                    onToggle: {
-                        togglePanel(panelSetting, visible: true)
+                HStack {
+                    Image(systemName: panelSetting.panel.icon)
+                        .foregroundColor(.gray)
+                        .frame(width: 30)
+                    
+                    Text(panelSetting.panel.title)
+                    
+                    Spacer()
+                    
+                    if editMode?.wrappedValue.isEditing == true {
+                        Button(action: {
+                            togglePanel(panelSetting, visible: true)
+                        }) {
+                            Image(systemName: "eye")
+                                .foregroundColor(.blue)
+                        }
+                        .buttonStyle(.plain)
                     }
-                )
+                }
             }
             .onMove { source, destination in
                 movePanels(source: source, destination: destination, visible: false)

@@ -4,21 +4,72 @@ struct TaskTypesSection: View {
     @StateObject private var settingsManager = SettingsManager.shared
     @Binding var errorMessage: String?
     @State private var newType = ""
+    @State private var typeToDelete: String? = nil
+    @Environment(\.editMode) private var editMode
     
     var body: some View {
-        Section("Task Types") {
+        Section(header: Text("Task Types")
+            .textCase(.none)
+            .font(.system(size: 16))) {
             ForEach(settingsManager.types, id: \.self) { type in
-                SettingsItemRow(
-                    title: type,
-                    onDelete: { deleteType(type) }
-                )
+                HStack {
+                    Text(type)
+                    Spacer()
+                    if editMode?.wrappedValue.isEditing == true {
+                        Image(systemName: "minus.circle.fill")
+                            .foregroundColor(.red)
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    if editMode?.wrappedValue.isEditing == true {
+                        print("debug: delete triggered for type: \(type)")
+                        typeToDelete = type
+                    }
+                }
+            }
+            .onMove { source, destination in
+                var updatedTypes = settingsManager.types
+                updatedTypes.move(fromOffsets: source, toOffset: destination)
+                
+                Task {
+                    do {
+                        try await settingsManager.updateTaskTypes(updatedTypes)
+                    } catch {
+                        errorMessage = error.localizedDescription
+                    }
+                }
             }
             
-            AddNewItemRow(
-                placeholder: "New Type",
-                text: $newType,
-                onAdd: addNewType
-            )
+            if editMode?.wrappedValue.isEditing == true {
+                AddNewItemRow(
+                    placeholder: "New Type",
+                    text: $newType,
+                    onAdd: addNewType
+                )
+            }
+        }
+        .textCase(nil)
+        .alert("Delete Type", isPresented: .init(
+            get: { typeToDelete != nil },
+            set: { if !$0 { typeToDelete = nil } }
+        )) {
+            Button("Cancel", role: .cancel) {
+                typeToDelete = nil
+            }
+            .textCase(nil)
+            
+            Button("Delete", role: .destructive) {
+                if let type = typeToDelete {
+                    deleteType(type)
+                }
+                typeToDelete = nil
+            }
+            .textCase(nil)
+        } message: {
+            if let type = typeToDelete {
+                Text("Are you sure you want to delete '\(type)'? This will remove the type from all tasks that use it.")
+            }
         }
     }
     
