@@ -183,6 +183,16 @@ struct AgendaDetailPanel: View {
             .background(Color(.systemBackground))
             .offset(x: offset)
         }
+        .alert("Delete Task", isPresented: $showingDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                Task {
+                    await deleteTask()
+                }
+            }
+        } message: {
+            Text("Are you sure you want to delete this task? This action cannot be undone.")
+        }
     }
     
     private func saveChanges() async {
@@ -199,6 +209,23 @@ struct AgendaDetailPanel: View {
                 category: category,
                 type: type
             )
+            await MainActor.run {
+                isPresented = false
+            }
+        } catch {
+            await MainActor.run {
+                errorMessage = error.localizedDescription
+                isLoading = false
+            }
+        }
+    }
+    
+    private func deleteTask() async {
+        isLoading = true
+        errorMessage = nil
+        
+        do {
+            try await agendaManager.deleteAgendaItem(item.id)
             await MainActor.run {
                 isPresented = false
             }
