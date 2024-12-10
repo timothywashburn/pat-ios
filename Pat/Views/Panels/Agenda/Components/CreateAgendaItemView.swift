@@ -3,9 +3,13 @@ import SwiftUI
 struct CreateAgendaItemView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var agendaManager = AgendaManager.getInstance()
+    @StateObject private var settingsManager = SettingsManager.shared
     @State private var name = ""
     @State private var date = Date()
     @State private var notes = ""
+    @State private var urgent = false
+    @State private var category: String?
+    @State private var type: String?
     @State private var isLoading = false
     @State private var errorMessage: String?
     
@@ -15,6 +19,31 @@ struct CreateAgendaItemView: View {
                 Section {
                     TextField("Event Name", text: $name)
                     DatePicker("Date", selection: $date, displayedComponents: [.date, .hourAndMinute])
+                }
+                
+                Section {
+                    Toggle(isOn: $urgent) {
+                        Text("Urgent")
+                            .foregroundColor(.red)
+                    }
+                    
+                    Picker("Category", selection: $category) {
+                        Text("None")
+                            .tag(Optional<String>.none)
+                        ForEach(settingsManager.categories, id: \.self) { category in
+                            Text(category)
+                                .tag(Optional(category))
+                        }
+                    }
+                    
+                    Picker("Type", selection: $type) {
+                        Text("None")
+                            .tag(Optional<String>.none)
+                        ForEach(settingsManager.types, id: \.self) { type in
+                            Text(type)
+                                .tag(Optional(type))
+                        }
+                    }
                 }
                 
                 Section {
@@ -55,7 +84,10 @@ struct CreateAgendaItemView: View {
                 _ = try await agendaManager.createAgendaItem(
                     name: name,
                     date: date,
-                    notes: notes.isEmpty ? nil : notes
+                    notes: notes.isEmpty ? nil : notes,
+                    urgent: urgent,
+                    category: category,
+                    type: type
                 )
                 await MainActor.run {
                     dismiss()

@@ -14,6 +14,10 @@ struct AgendaPanel: View {
         agendaManager.agendaItems
             .filter { showCompleted == $0.completed }
             .sorted { (item1, item2) in
+                if item1.urgent != item2.urgent {
+                    return item1.urgent
+                }
+                
                 guard let date1 = item1.date, let date2 = item2.date else {
                     if item1.date == nil { return false }
                     if item2.date == nil { return true }

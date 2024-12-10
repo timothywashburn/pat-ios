@@ -5,10 +5,14 @@ struct AgendaDetailPanel: View {
     @Binding var isPresented: Bool
     @State private var offset: CGFloat = 0
     @StateObject private var agendaManager = AgendaManager.getInstance()
+    @StateObject private var settingsManager = SettingsManager.shared
     
     @State private var name: String
     @State private var date: Date?
     @State private var notes: String
+    @State private var urgent: Bool
+    @State private var category: String?
+    @State private var type: String?
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var showingDeleteAlert = false
@@ -19,6 +23,9 @@ struct AgendaDetailPanel: View {
         self._name = State(initialValue: item.name)
         self._date = State(initialValue: item.date)
         self._notes = State(initialValue: item.notes ?? "")
+        self._urgent = State(initialValue: item.urgent)
+        self._category = State(initialValue: item.category)
+        self._type = State(initialValue: item.type)
     }
     
     var body: some View {
@@ -101,6 +108,46 @@ struct AgendaDetailPanel: View {
                         }
                         .padding(.horizontal)
                         
+                        Toggle(isOn: $urgent) {
+                            Text("Urgent")
+                                .foregroundColor(.red)
+                        }
+                        .padding(.horizontal)
+                        
+                        VStack(alignment: .leading) {
+                            Text("Category")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            
+                            Picker("Category", selection: $category) {
+                                Text("None")
+                                    .tag(Optional<String>.none)
+                                ForEach(settingsManager.categories, id: \.self) { category in
+                                    Text(category)
+                                        .tag(Optional(category))
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                        }
+                        .padding(.horizontal)
+                        
+                        VStack(alignment: .leading) {
+                            Text("Type")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            
+                            Picker("Type", selection: $type) {
+                                Text("None")
+                                    .tag(Optional<String>.none)
+                                ForEach(settingsManager.types, id: \.self) { type in
+                                    Text(type)
+                                        .tag(Optional(type))
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                        }
+                        .padding(.horizontal)
+                        
                         VStack(alignment: .leading) {
                             Text("Notes")
                                 .font(.caption)
@@ -113,8 +160,6 @@ struct AgendaDetailPanel: View {
                                 )
                         }
                         .padding(.horizontal)
-                        
-                        Spacer()
                         
                         Button(role: .destructive) {
                             showingDeleteAlert = true
@@ -138,35 +183,6 @@ struct AgendaDetailPanel: View {
             .background(Color(.systemBackground))
             .offset(x: offset)
         }
-        .alert("Delete Task", isPresented: $showingDeleteAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("Delete", role: .destructive) {
-                Task {
-                    await deleteTask()
-                }
-            }
-        } message: {
-            Text("Are you sure you want to delete this task? This action cannot be undone.")
-        }
-        .contentShape(Rectangle())
-        .highPriorityGesture(
-            DragGesture()
-                .onChanged { gesture in
-                    offset = max(0, gesture.translation.width)
-                }
-                .onEnded { gesture in
-                    if gesture.translation.width > 100 {
-                        withAnimation(.easeOut(duration: 0.2)) {
-                            isPresented = false
-                        }
-                    } else {
-                        withAnimation(.easeOut(duration: 0.2)) {
-                            offset = 0
-                        }
-                    }
-                }
-        )
-        .ignoresSafeArea()
     }
     
     private func saveChanges() async {
@@ -178,25 +194,11 @@ struct AgendaDetailPanel: View {
                 item.id,
                 name: name,
                 date: date,
-                notes: notes
+                notes: notes,
+                urgent: urgent,
+                category: category,
+                type: type
             )
-            await MainActor.run {
-                isPresented = false
-            }
-        } catch {
-            await MainActor.run {
-                errorMessage = error.localizedDescription
-                isLoading = false
-            }
-        }
-    }
-    
-    private func deleteTask() async {
-        isLoading = true
-        errorMessage = nil
-        
-        do {
-            try await agendaManager.deleteAgendaItem(item.id)
             await MainActor.run {
                 isPresented = false
             }

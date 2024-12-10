@@ -66,6 +66,30 @@ struct AgendaItemView: View {
                     }
                 }
                 
+                if item.category != nil || item.type != nil {
+                    HStack(spacing: 8) {
+                        if let category = item.category {
+                            Text(category)
+                                .font(.caption)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.blue.opacity(0.1))
+                                .foregroundColor(.blue)
+                                .cornerRadius(12)
+                        }
+                        
+                        if let type = item.type {
+                            Text(type)
+                                .font(.caption)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.purple.opacity(0.1))
+                                .foregroundColor(.purple)
+                                .cornerRadius(12)
+                        }
+                    }
+                }
+                
                 if let notes = item.notes, !notes.isEmpty {
                     Text(notes)
                         .font(.body)
@@ -78,5 +102,9 @@ struct AgendaItemView: View {
         .padding()
         .background(Color(.systemGray6))
         .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(item.urgent ? Color.red : Color.clear, lineWidth: 2)
+        )
     }
 }

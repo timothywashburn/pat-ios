@@ -7,9 +7,12 @@ struct AgendaItem: Identifiable, Codable {
     let date: Date?
     let notes: String?
     let completed: Bool
+    let urgent: Bool
+    let category: String?
+    let type: String?
     
     enum CodingKeys: String, CodingKey {
-        case id, name, notes, completed
+        case id, name, notes, completed, urgent, category, type
         case date = "dueDate"
     }
 }
@@ -67,7 +70,10 @@ class AgendaManager: ObservableObject {
                 name: name,
                 date: date,
                 notes: task["notes"] as? String,
-                completed: task["completed"] as? Bool ?? false
+                completed: task["completed"] as? Bool ?? false,
+                urgent: task["urgent"] as? Bool ?? false,
+                category: task["category"] as? String,
+                type: task["type"] as? String
             )
         }
         
@@ -76,7 +82,7 @@ class AgendaManager: ObservableObject {
         }
     }
     
-    func createAgendaItem(name: String, date: Date, notes: String? = nil) async throws -> AgendaItem {
+    func createAgendaItem(name: String, date: Date, notes: String? = nil, urgent: Bool = false, category: String? = nil, type: String? = nil) async throws -> AgendaItem {
         guard let token = AuthState.shared.authToken else {
             throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Not authenticated"])
         }
@@ -90,7 +96,10 @@ class AgendaManager: ObservableObject {
         let body: [String: Any] = [
             "name": name,
             "dueDate": dateFormatter.string(from: date),
-            "notes": notes ?? ""
+            "notes": notes ?? "",
+            "urgent": urgent,
+            "category": category as Any,
+            "type": type as Any
         ]
         
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -113,7 +122,10 @@ class AgendaManager: ObservableObject {
             name: taskData["name"] as? String ?? "",
             date: (taskData["dueDate"] as? String).flatMap { dateFormatter.date(from: $0) },
             notes: taskData["notes"] as? String,
-            completed: taskData["completed"] as? Bool ?? false
+            completed: taskData["completed"] as? Bool ?? false,
+            urgent: taskData["urgent"] as? Bool ?? false,
+            category: taskData["category"] as? String,
+            type: taskData["type"] as? String
         )
         
         try await loadAgendaItems()
@@ -149,7 +161,7 @@ class AgendaManager: ObservableObject {
         try await loadAgendaItems()
     }
     
-    func updateAgendaItem(_ id: String, name: String?, date: Date?, notes: String?) async throws {
+    func updateAgendaItem(_ id: String, name: String?, date: Date?, notes: String?, urgent: Bool?, category: String?, type: String?) async throws {
         guard let token = AuthState.shared.authToken else {
             throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Not authenticated"])
         }
@@ -164,6 +176,9 @@ class AgendaManager: ObservableObject {
         if let name = name { body["name"] = name }
         body["dueDate"] = date.map { dateFormatter.string(from: $0) }
         if let notes = notes { body["notes"] = notes }
+        if let urgent = urgent { body["urgent"] = urgent }
+        body["category"] = category
+        body["type"] = type
         
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         

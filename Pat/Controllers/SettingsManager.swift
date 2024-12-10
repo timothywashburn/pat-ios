@@ -4,6 +4,8 @@ class SettingsManager: ObservableObject {
     static let shared = SettingsManager()
     @Published var panels: [PanelSetting] = []
     @Published var isLoaded = false
+    @Published var categories: [String] = ["School", "Work", "Personal"]
+    @Published var types: [String] = ["Assignment", "Project"]
     @Published private(set) var config: [String: Any] = [:]
     
     struct PanelSetting: Identifiable, Equatable {
@@ -45,7 +47,7 @@ class SettingsManager: ObservableObject {
         
         await MainActor.run {
             self.config = userData
-            updatePanelsFromConfig()
+            updateFromConfig()
             self.isLoaded = true
         }
     }
@@ -72,25 +74,46 @@ class SettingsManager: ObservableObject {
         
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let success = json["success"] as? Bool,
+              let responseData = json["data"] as? [String: Any],
+              let userData = responseData["user"] as? [String: Any],
               success else {
             throw NSError(domain: "", code: -1,
                         userInfo: [NSLocalizedDescriptionKey: "Failed to update configuration"])
         }
         
         await MainActor.run {
-            self.config = newConfig
-            updatePanelsFromConfig()
+            if var existingIosApp = self.config["iosApp"] as? [String: Any],
+               let newIosApp = newConfig["iosApp"] as? [String: Any] {
+                for (key, value) in newIosApp {
+                    existingIosApp[key] = value
+                }
+                var updatedConfig = self.config
+                updatedConfig["iosApp"] = existingIosApp
+                self.config = updatedConfig
+            } else {
+                self.config = userData
+            }
+            
+            updateFromConfig()
             NotificationCenter.default.post(name: NSNotification.Name("SettingsChanged"), object: nil)
         }
     }
     
-    // Panel-specific methods
-    private func updatePanelsFromConfig() {
-        guard let iosApp = config["iosApp"] as? [String: Any],
-              let panelSettings = iosApp["panels"] as? [[String: Any]] else {
-            return
+    private func updateFromConfig() {
+        if let iosApp = config["iosApp"] as? [String: Any] {
+            if let taskCategories = iosApp["taskCategories"] as? [String] {
+                self.categories = taskCategories
+            }
+            if let taskTypes = iosApp["taskTypes"] as? [String] {
+                self.types = taskTypes
+            }
+            if let panelSettings = iosApp["panels"] as? [[String: Any]] {
+                updatePanelsFromSettings(panelSettings)
+            }
         }
-        
+    }
+    
+    private func updatePanelsFromSettings(_ panelSettings: [[String: Any]]) {
         let panelMap = Dictionary(uniqueKeysWithValues: Panel.allCases.map { ($0.title.lowercased(), $0) })
         
         var newPanels: [PanelSetting] = []
@@ -115,16 +138,34 @@ class SettingsManager: ObservableObject {
     }
     
     func updatePanelSettings() async throws {
-        let panelConfig = panels.map { setting -> [String: Any] in
-            return [
-                "panel": setting.panel.title.lowercased(),
-                "visible": setting.visible
-            ]
-        }
-        
         let newConfig: [String: Any] = [
             "iosApp": [
-                "panels": panelConfig
+                "panels": panels.map { setting -> [String: Any] in
+                    return [
+                        "panel": setting.panel.title.lowercased(),
+                        "visible": setting.visible
+                    ]
+                }
+            ]
+        ]
+        
+        try await updateConfig(newConfig)
+    }
+
+    func updateTaskCategories(_ categories: [String]) async throws {
+        let newConfig: [String: Any] = [
+            "iosApp": [
+                "taskCategories": categories
+            ]
+        ]
+        
+        try await updateConfig(newConfig)
+    }
+
+    func updateTaskTypes(_ types: [String]) async throws {
+        let newConfig: [String: Any] = [
+            "iosApp": [
+                "taskTypes": types
             ]
         ]
         
