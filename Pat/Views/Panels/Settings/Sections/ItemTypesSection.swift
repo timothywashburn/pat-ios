@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct TaskTypesSection: View {
+struct ItemTypesSection: View {
     @StateObject private var settingsManager = SettingsManager.shared
     @Binding var errorMessage: String?
     @State private var newType = ""
@@ -8,7 +8,7 @@ struct TaskTypesSection: View {
     @Environment(\.editMode) private var editMode
     
     var body: some View {
-        Section(header: Text("Task Types")
+        Section(header: Text("Item Types")
             .textCase(.none)
             .font(.system(size: 16))) {
             ForEach(settingsManager.types, id: \.self) { type in
@@ -34,7 +34,7 @@ struct TaskTypesSection: View {
                 
                 Task {
                     do {
-                        try await settingsManager.updateTaskTypes(updatedTypes)
+                        try await settingsManager.updateItemTypes(updatedTypes)
                     } catch {
                         errorMessage = error.localizedDescription
                     }
@@ -68,7 +68,7 @@ struct TaskTypesSection: View {
             .textCase(nil)
         } message: {
             if let type = typeToDelete {
-                Text("Are you sure you want to delete '\(type)'? This will remove the type from all tasks that use it.")
+                Text("Are you sure you want to delete '\(type)'? This will remove the type from all items that use it.")
             }
         }
     }
@@ -79,7 +79,7 @@ struct TaskTypesSection: View {
         
         Task {
             do {
-                try await settingsManager.updateTaskTypes(updatedTypes)
+                try await settingsManager.updateItemTypes(updatedTypes)
             } catch {
                 errorMessage = error.localizedDescription
             }
@@ -93,7 +93,7 @@ struct TaskTypesSection: View {
         
         Task {
             do {
-                try await settingsManager.updateTaskTypes(updatedTypes)
+                try await settingsManager.updateItemTypes(updatedTypes)
                 newType = ""
             } catch {
                 errorMessage = error.localizedDescription

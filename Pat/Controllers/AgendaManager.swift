@@ -38,7 +38,7 @@ class AgendaManager: ObservableObject {
             return
         }
         
-        let url = URL(string: "\(PatConfig.apiURL)/api/tasks")!
+        let url = URL(string: "\(PatConfig.apiURL)/api/items")!
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -49,17 +49,17 @@ class AgendaManager: ObservableObject {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let success = json["success"] as? Bool,
               let responseData = json["data"] as? [String: Any],
-              let taskData = responseData["tasks"] as? [[String: Any]] else {
+              let itemData = responseData["items"] as? [[String: Any]] else {
             throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
         }
         
-        let items = taskData.compactMap { task -> AgendaItem? in
-            guard let id = task["_id"] as? String,
-                  let name = task["name"] as? String else {
+        let items = itemData.compactMap { item -> AgendaItem? in
+            guard let id = item["_id"] as? String,
+                  let name = item["name"] as? String else {
                 return nil
             }
             
-            let date = task["dueDate"].flatMap { dateString in
+            let date = item["dueDate"].flatMap { dateString in
                 dateString as? String
             }.flatMap { dateString in
                 dateFormatter.date(from: dateString)
@@ -69,11 +69,11 @@ class AgendaManager: ObservableObject {
                 id: id,
                 name: name,
                 date: date,
-                notes: task["notes"] as? String,
-                completed: task["completed"] as? Bool ?? false,
-                urgent: task["urgent"] as? Bool ?? false,
-                category: task["category"] as? String,
-                type: task["type"] as? String
+                notes: item["notes"] as? String,
+                completed: item["completed"] as? Bool ?? false,
+                urgent: item["urgent"] as? Bool ?? false,
+                category: item["category"] as? String,
+                type: item["type"] as? String
             )
         }
         
@@ -87,7 +87,7 @@ class AgendaManager: ObservableObject {
             throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Not authenticated"])
         }
         
-        let url = URL(string: "\(PatConfig.apiURL)/api/tasks")!
+        let url = URL(string: "\(PatConfig.apiURL)/api/items")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -109,7 +109,7 @@ class AgendaManager: ObservableObject {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let success = json["success"] as? Bool,
               let responseData = json["data"] as? [String: Any],
-              let taskData = responseData["task"] as? [String: Any] else {
+              let itemData = responseData["item"] as? [String: Any] else {
             throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
         }
         
@@ -118,14 +118,14 @@ class AgendaManager: ObservableObject {
         }
         
         let agendaItem = AgendaItem(
-            id: taskData["id"] as? String ?? "",
-            name: taskData["name"] as? String ?? "",
-            date: (taskData["dueDate"] as? String).flatMap { dateFormatter.date(from: $0) },
-            notes: taskData["notes"] as? String,
-            completed: taskData["completed"] as? Bool ?? false,
-            urgent: taskData["urgent"] as? Bool ?? false,
-            category: taskData["category"] as? String,
-            type: taskData["type"] as? String
+            id: itemData["id"] as? String ?? "",
+            name: itemData["name"] as? String ?? "",
+            date: (itemData["dueDate"] as? String).flatMap { dateFormatter.date(from: $0) },
+            notes: itemData["notes"] as? String,
+            completed: itemData["completed"] as? Bool ?? false,
+            urgent: itemData["urgent"] as? Bool ?? false,
+            category: itemData["category"] as? String,
+            type: itemData["type"] as? String
         )
         
         try await loadAgendaItems()
@@ -138,7 +138,7 @@ class AgendaManager: ObservableObject {
             throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Not authenticated"])
         }
         
-        let url = URL(string: "\(PatConfig.apiURL)/api/tasks/\(id)/complete")!
+        let url = URL(string: "\(PatConfig.apiURL)/api/items/\(id)/complete")!
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -166,7 +166,7 @@ class AgendaManager: ObservableObject {
             throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Not authenticated"])
         }
         
-        let url = URL(string: "\(PatConfig.apiURL)/api/tasks/\(id)")!
+        let url = URL(string: "\(PatConfig.apiURL)/api/items/\(id)")!
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -201,7 +201,7 @@ class AgendaManager: ObservableObject {
             throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Not authenticated"])
         }
         
-        let url = URL(string: "\(PatConfig.apiURL)/api/tasks/\(id)")!
+        let url = URL(string: "\(PatConfig.apiURL)/api/items/\(id)")!
         var request = URLRequest(url: url)
         request.httpMethod = "DELETE"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")

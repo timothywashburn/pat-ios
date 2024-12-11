@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct TaskCategoriesSection: View {
+struct ItemCategoriesSection: View {
     @StateObject private var settingsManager = SettingsManager.shared
     @Binding var errorMessage: String?
     @State private var newCategory = ""
@@ -8,7 +8,7 @@ struct TaskCategoriesSection: View {
     @Environment(\.editMode) private var editMode
     
     var body: some View {
-        Section(header: Text("Task Categories")
+        Section(header: Text("Item Categories")
             .textCase(.none)
             .font(.system(size: 16))) {
             ForEach(settingsManager.categories, id: \.self) { category in
@@ -33,7 +33,7 @@ struct TaskCategoriesSection: View {
                 
                 Task {
                     do {
-                        try await settingsManager.updateTaskCategories(updatedCategories)
+                        try await settingsManager.updateItemCategories(updatedCategories)
                     } catch {
                         errorMessage = error.localizedDescription
                     }
@@ -66,7 +66,7 @@ struct TaskCategoriesSection: View {
             .textCase(nil)
         } message: {
             if let category = categoryToDelete {
-                Text("Are you sure you want to delete '\(category)'? This will remove the category from all tasks that use it.")
+                Text("Are you sure you want to delete '\(category)'? This will remove the category from all items that use it.")
             }
         }
     }
@@ -77,7 +77,7 @@ struct TaskCategoriesSection: View {
         
         Task {
             do {
-                try await settingsManager.updateTaskCategories(updatedCategories)
+                try await settingsManager.updateItemCategories(updatedCategories)
             } catch {
                 errorMessage = error.localizedDescription
             }
@@ -91,7 +91,7 @@ struct TaskCategoriesSection: View {
         
         Task {
             do {
-                try await settingsManager.updateTaskCategories(updatedCategories)
+                try await settingsManager.updateItemCategories(updatedCategories)
                 newCategory = ""
             } catch {
                 errorMessage = error.localizedDescription

@@ -166,7 +166,7 @@ struct AgendaDetailPanel: View {
                         } label: {
                             HStack {
                                 Image(systemName: "trash")
-                                Text("Delete Task")
+                                Text("Delete Item")
                             }
                             .foregroundColor(.red)
                             .padding()
@@ -183,15 +183,15 @@ struct AgendaDetailPanel: View {
             .background(Color(.systemBackground))
             .offset(x: offset)
         }
-        .alert("Delete Task", isPresented: $showingDeleteAlert) {
+        .alert("Delete Item", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {
                 Task {
-                    await deleteTask()
+                    await deleteItem()
                 }
             }
         } message: {
-            Text("Are you sure you want to delete this task? This action cannot be undone.")
+            Text("Are you sure you want to delete this item? This action cannot be undone.")
         }
     }
     
@@ -220,7 +220,7 @@ struct AgendaDetailPanel: View {
         }
     }
     
-    private func deleteTask() async {
+    private func deleteItem() async {
         isLoading = true
         errorMessage = nil
         

@@ -101,11 +101,11 @@ class SettingsManager: ObservableObject {
     
     private func updateFromConfig() {
         if let iosApp = config["iosApp"] as? [String: Any] {
-            if let taskCategories = iosApp["taskCategories"] as? [String] {
-                self.categories = taskCategories
+            if let itemCategories = iosApp["itemCategories"] as? [String] {
+                self.categories = itemCategories
             }
-            if let taskTypes = iosApp["taskTypes"] as? [String] {
-                self.types = taskTypes
+            if let itemTypes = iosApp["itemTypes"] as? [String] {
+                self.types = itemTypes
             }
             if let panelSettings = iosApp["panels"] as? [[String: Any]] {
                 updatePanelsFromSettings(panelSettings)
@@ -152,20 +152,20 @@ class SettingsManager: ObservableObject {
         try await updateConfig(newConfig)
     }
 
-    func updateTaskCategories(_ categories: [String]) async throws {
+    func updateItemCategories(_ categories: [String]) async throws {
         let newConfig: [String: Any] = [
             "iosApp": [
-                "taskCategories": categories
+                "itemCategories": categories
             ]
         ]
         
         try await updateConfig(newConfig)
     }
 
-    func updateTaskTypes(_ types: [String]) async throws {
+    func updateItemTypes(_ types: [String]) async throws {
         let newConfig: [String: Any] = [
             "iosApp": [
-                "taskTypes": types
+                "itemTypes": types
             ]
         ]
         

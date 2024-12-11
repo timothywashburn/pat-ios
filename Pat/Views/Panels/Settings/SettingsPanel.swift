@@ -33,8 +33,8 @@ struct SettingsPanel: View {
             
             List {
                 PanelManagementSection(errorMessage: $errorMessage)
-                TaskCategoriesSection(errorMessage: $errorMessage)
-                TaskTypesSection(errorMessage: $errorMessage)
+                ItemCategoriesSection(errorMessage: $errorMessage)
+                ItemTypesSection(errorMessage: $errorMessage)
             }
             .listStyle(.insetGrouped)
             .environment(\.editMode, $editMode)

@@ -5,7 +5,7 @@ struct AgendaPanel: View {
     @State private var showingCreateSheet = false
     @State private var isLoading = false
     @State private var errorMessage: String?
-    @State private var selectedTask: AgendaItem?
+    @State private var selectedItem: AgendaItem?
     @State private var showingDetail = false
     @Binding var showHamburgerMenu: Bool
     @State private var showCompleted = false
@@ -65,7 +65,7 @@ struct AgendaPanel: View {
                             .listRowSeparator(.hidden)
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                selectedTask = item
+                                selectedItem = item
                                 withAnimation(.spring()) {
                                     showingDetail = true
                                 }
@@ -85,8 +85,8 @@ struct AgendaPanel: View {
             CreateAgendaItemView()
         }
         .overlay {
-            if showingDetail, let task = selectedTask {
-                AgendaDetailPanel(item: task, isPresented: $showingDetail)
+            if showingDetail, let item = selectedItem {
+                AgendaDetailPanel(item: item, isPresented: $showingDetail)
                     .transition(.move(edge: .trailing))
             }
         }
