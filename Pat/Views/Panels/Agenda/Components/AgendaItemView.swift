@@ -102,9 +102,13 @@ struct AgendaItemView: View {
         .padding()
         .background(Color(.systemGray6))
         .cornerRadius(10)
-        .overlay(
+        .overlay {
             RoundedRectangle(cornerRadius: 10)
-                .stroke(item.urgent ? Color.red : Color.clear, lineWidth: 2)
-        )
+                .glow(
+                    fill: item.urgent ? .red : .clear,
+                    lineWidth: 2.0,
+                    blurRadius: 6.0
+                )
+        }
     }
 }
