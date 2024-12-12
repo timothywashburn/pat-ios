@@ -26,14 +26,20 @@ class AuthState: ObservableObject {
     }
     
     func signIn(email: String, password: String) async throws {
+        print("attempting sign in with email: \(email)")
+        
         let request = NetworkRequest(
             endpoint: "/api/auth/login",
             method: .post,
             body: ["email": email, "password": password]
         )
         
+        print("sending login request...")
         let response = try await NetworkManager.shared.perform(request)
+        print("got login response:", response)
+        
         let loginData = try extractAuthData(from: response)
+        print("successfully extracted auth data, user: \(loginData.user.name)")
         
         await MainActor.run {
             updateAuthState(user: loginData.user, tokens: loginData.tokens)
@@ -63,7 +69,7 @@ class AuthState: ObservableObject {
         _ = try await NetworkManager.shared.perform(request)
     }
     
-    func refreshTokensIfNeeded() async throws {
+    func refreshAuth() async throws {
         guard let refreshToken = tokens?.refreshToken else {
             throw AuthError.refreshFailed
         }
@@ -115,7 +121,7 @@ class AuthState: ObservableObject {
                     self.tokens = decodedTokens
                 }
                 
-                try await refreshTokensIfNeeded()
+                try await refreshAuth()
                 await MainActor.run {
                     self.isAuthenticated = true
                 }
@@ -177,15 +183,9 @@ class AuthState: ObservableObject {
     }
     
     private func extractAuthData(from response: [String: Any]) throws -> (user: UserInfo, tokens: AuthTokens) {
-        if let token = response["token"] as? String,
-           let refreshToken = response["refreshToken"] as? String,
-           let currentUser = userInfo {
-            return (currentUser, AuthTokens(accessToken: token, refreshToken: refreshToken))
-        }
-        
-        guard let userData = response["user"] as? [String: Any],
-              let token = response["token"] as? String,
-              let refreshToken = response["refreshToken"] as? String else {
+        guard let token = response["token"] as? String,
+              let refreshToken = response["refreshToken"] as? String,
+              let userData = response["user"] as? [String: Any] else {
             throw AuthError.invalidResponse
         }
         

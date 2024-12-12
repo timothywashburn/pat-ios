@@ -38,15 +38,17 @@ struct PatApp: App {
                     if authState.isAuthenticated {
                         Task {
                             do {
-                                try await authState.refreshTokensIfNeeded()
-                                try await settingsManager.loadConfig()
+                                try await authState.refreshAuth()
+                                if authState.isEmailVerified {
+                                    try await settingsManager.loadConfig()
+                                }
                             } catch {
                                 if case AuthError.refreshFailed = error {
                                     await MainActor.run {
                                         authState.signOut()
                                     }
                                 }
-                                print("token refresh error: \(error)")
+                                print("refresh auth error: \(error)")
                             }
                         }
                     }
@@ -57,7 +59,7 @@ struct PatApp: App {
                 }
             }
             .onChange(of: authState.isAuthenticated, initial: true) { oldValue, newValue in
-                if newValue {
+                if newValue && authState.isEmailVerified {
                     socketService.connect()
                     Task {
                         do {
@@ -68,6 +70,18 @@ struct PatApp: App {
                     }
                 } else if oldValue {
                     socketService.disconnect()
+                }
+            }
+            .onChange(of: authState.isEmailVerified) { oldValue, newValue in
+                if newValue && authState.isAuthenticated {
+                    socketService.connect()
+                    Task {
+                        do {
+                            try await settingsManager.loadConfig()
+                        } catch {
+                            print("settings load error: \(error)")
+                        }
+                    }
                 }
             }
         }
