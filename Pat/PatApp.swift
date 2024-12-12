@@ -32,6 +32,9 @@ struct PatApp: App {
             .animation(.easeOut(duration: 0.3), value: authState.isLoading)
             .animation(.easeOut(duration: 0.3), value: authState.isAuthenticated)
             .animation(.easeOut(duration: 0.3), value: authState.isEmailVerified)
+            .onOpenURL {url in
+                DeepLinkHandler.handleURL(url)
+            }
             .onChange(of: scenePhase) { oldPhase, newPhase in
                 switch newPhase {
                 case .active:
