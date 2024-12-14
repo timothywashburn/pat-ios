@@ -12,10 +12,11 @@ struct CreateAgendaItemView: View {
     @State private var type: String?
     @State private var isLoading = false
     @State private var errorMessage: String?
-    @State private var didCreate = false
+    var onComplete: ((Bool) -> Void)?
     
-    init(initialName: String = "") {
+    init(initialName: String = "", onComplete: ((Bool) -> Void)? = nil) {
         _name = State(initialValue: initialName)
+        self.onComplete = onComplete
     }
     
     var body: some View {
@@ -66,6 +67,7 @@ struct CreateAgendaItemView: View {
             .navigationTitle("New Agenda Item")
             .navigationBarItems(
                 leading: Button("Cancel") {
+                    onComplete?(false)
                     dismiss()
                 },
                 trailing: Button(action: createItem) {
@@ -95,7 +97,7 @@ struct CreateAgendaItemView: View {
                     type: type
                 )
                 await MainActor.run {
-                    didCreate = true
+                    onComplete?(true)
                     dismiss()
                 }
             } catch {

@@ -138,18 +138,17 @@ struct InboxPanel: View {
         }
         .sheet(isPresented: $showingCreateAgendaSheet) {
             if let thought = selectedThought {
-                CreateAgendaItemView(initialName: thought.content)
-                    .onDisappear {
-                        if !showingCreateAgendaSheet {
-                            Task {
-                                do {
-                                    try await thoughtManager.deleteThought(thought.id)
-                                } catch {
-                                    errorMessage = error.localizedDescription
-                                }
+                CreateAgendaItemView(initialName: thought.content) { didCreate in
+                    if didCreate {
+                        Task {
+                            do {
+                                try await thoughtManager.deleteThought(thought.id)
+                            } catch {
+                                errorMessage = error.localizedDescription
                             }
                         }
                     }
+                }
             } else {
                 CreateAgendaItemView()
             }
@@ -186,7 +185,7 @@ struct ThoughtView: View {
                     editedContent = thought.content
                     isFocused = true
                 }
-                .onChange(of: isFocused) { oldValue, newValue in
+                .onChange(of: isFocused) { newValue in
                     if !newValue {
                         onCommitEdit()
                     }
