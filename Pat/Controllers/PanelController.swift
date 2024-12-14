@@ -36,15 +36,36 @@ class PanelController: ObservableObject {
     }
     
     private func updateFromSettings(isInitialLoad: Bool) {
+        let oldSettingsVisible = panelSettings[.settings] == true
+        
         let settings = SettingsManager.shared.panels
         panelSettings = Dictionary(uniqueKeysWithValues: settings.map { ($0.panel, $0.visible) })
         panelOrder = settings.map(\.panel)
-        currentPanels = visiblePanels
         
-        if isInitialLoad {
+        let newSettingsVisible = panelSettings[.settings] == true
+        
+        if selectedPanel == .settings {
+            if oldSettingsVisible && !newSettingsVisible {
+                // Case: visible -> hidden
+                // Act like hamburger menu selection of a hidden panel
+                currentPanels = [.settings]
+            } else if !oldSettingsVisible && newSettingsVisible {
+                // Case: hidden -> visible
+                // Update to show with other visible panels
+                currentPanels = visiblePanels
+            } else if oldSettingsVisible && newSettingsVisible {
+                // Case: visible -> visible
+                // Update current panels normally
+                currentPanels = visiblePanels
+            }
+            // Case: hidden -> hidden is handled by doing nothing
+        } else if isInitialLoad {
+            currentPanels = visiblePanels
             if let firstVisible = visiblePanels.first {
                 selectedPanel = firstVisible
             }
+        } else {
+            currentPanels = visiblePanels
         }
     }
     
