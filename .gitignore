@@ -1,4 +1,4 @@
 .idea/
-*/xcuserdata/*
+xcuserdata/
 .DS_Store
 Pat/Config/Development.xcconfig

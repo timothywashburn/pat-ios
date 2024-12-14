@@ -4,7 +4,7 @@ struct CreateAgendaItemView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var agendaManager = AgendaManager.getInstance()
     @StateObject private var settingsManager = SettingsManager.shared
-    @State private var name = ""
+    @State private var name: String
     @State private var date = Date()
     @State private var notes = ""
     @State private var urgent = false
@@ -12,6 +12,11 @@ struct CreateAgendaItemView: View {
     @State private var type: String?
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var didCreate = false
+    
+    init(initialName: String = "") {
+        _name = State(initialValue: initialName)
+    }
     
     var body: some View {
         NavigationView {
@@ -90,6 +95,7 @@ struct CreateAgendaItemView: View {
                     type: type
                 )
                 await MainActor.run {
+                    didCreate = true
                     dismiss()
                 }
             } catch {
