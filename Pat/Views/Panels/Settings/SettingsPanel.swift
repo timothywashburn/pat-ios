@@ -35,6 +35,7 @@ struct SettingsPanel: View {
                 PanelManagementSection(errorMessage: $errorMessage)
                 ItemCategoriesSection(errorMessage: $errorMessage)
                 ItemTypesSection(errorMessage: $errorMessage)
+                SettingsPropertyKeysSection(errorMessage: $errorMessage)
             }
             .listStyle(.insetGrouped)
             .environment(\.editMode, $editMode)

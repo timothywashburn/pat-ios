@@ -6,6 +6,7 @@ class SettingsManager: ObservableObject {
     @Published var isLoaded = false
     @Published var categories: [String] = ["School", "Work", "Personal"]
     @Published var types: [String] = ["Assignment", "Project"]
+    @Published var propertyKeys: [String] = ["Email", "Phone", "Company", "Title"]
     @Published private(set) var config: [String: Any] = [:]
     
     struct PanelSetting: Identifiable, Equatable {
@@ -107,6 +108,9 @@ class SettingsManager: ObservableObject {
             if let itemTypes = iosApp["itemTypes"] as? [String] {
                 self.types = itemTypes
             }
+            if let propertyKeys = iosApp["propertyKeys"] as? [String] {
+                self.propertyKeys = propertyKeys
+            }
             if let panelSettings = iosApp["panels"] as? [[String: Any]] {
                 updatePanelsFromSettings(panelSettings)
             }
@@ -166,6 +170,16 @@ class SettingsManager: ObservableObject {
         let newConfig: [String: Any] = [
             "iosApp": [
                 "itemTypes": types
+            ]
+        ]
+        
+        try await updateConfig(newConfig)
+    }
+    
+    func updatePropertyKeys(_ keys: [String]) async throws {
+        let newConfig: [String: Any] = [
+            "iosApp": [
+                "propertyKeys": keys
             ]
         ]
         

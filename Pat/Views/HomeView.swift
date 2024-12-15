@@ -35,6 +35,8 @@ struct HomeView: View {
                                 TasksPanel(showHamburgerMenu: $showHamburgerMenu)
                             case .inbox:
                                 InboxPanel(showHamburgerMenu: $showHamburgerMenu)
+                            case .people:
+                                PeoplePanel(showHamburgerMenu: $showHamburgerMenu)
                             case .settings:
                                 SettingsPanel(editMode: $settingsEditMode, showHamburgerMenu: $showHamburgerMenu)
                             }
