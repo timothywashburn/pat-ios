@@ -1,12 +1,14 @@
 import SwiftUI
 
 class PanelController: ObservableObject {
+    static let shared = PanelController()
+    
     @Published var selectedPanel: Panel = .agenda
     @Published private(set) var currentPanels: [Panel] = []
     private var panelSettings: [Panel: Bool] = [:]
     private var panelOrder: [Panel] = []
     
-    init() {
+    private init() {
         updateFromSettings(isInitialLoad: true)
         
         NotificationCenter.default.addObserver(self,
@@ -36,6 +38,9 @@ class PanelController: ObservableObject {
     }
     
     private func updateFromSettings(isInitialLoad: Bool) {
+        print("updating from settings with initialLoad \(isInitialLoad)")
+        print("selecting \(selectedPanel)")
+        
         let oldSettingsVisible = panelSettings[.settings] == true
         
         let settings = SettingsManager.shared.panels
@@ -44,7 +49,14 @@ class PanelController: ObservableObject {
         
         let newSettingsVisible = panelSettings[.settings] == true
         
-        if selectedPanel == .settings {
+        if isInitialLoad {
+            print("visible panels: \(visiblePanels)")
+            print("panelOrder: \(panelOrder)")
+            currentPanels = visiblePanels
+            if let firstVisible = visiblePanels.first {
+                selectedPanel = firstVisible
+            }
+        } else if selectedPanel == .settings {
             if oldSettingsVisible && !newSettingsVisible {
                 // Case: visible -> hidden
                 // Act like hamburger menu selection of a hidden panel
@@ -59,11 +71,6 @@ class PanelController: ObservableObject {
                 currentPanels = visiblePanels
             }
             // Case: hidden -> hidden is handled by doing nothing
-        } else if isInitialLoad {
-            currentPanels = visiblePanels
-            if let firstVisible = visiblePanels.first {
-                selectedPanel = firstVisible
-            }
         } else {
             currentPanels = visiblePanels
         }

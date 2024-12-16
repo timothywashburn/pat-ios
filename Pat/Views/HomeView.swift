@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct HomeView: View {
-    @StateObject private var panelController = PanelController()
+    @StateObject private var panelController = PanelController.shared
     @StateObject private var settingsManager = SettingsManager.shared
     @GestureState private var dragOffset: CGFloat = 0
     @State private var showHamburgerMenu = false

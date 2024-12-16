@@ -2,6 +2,7 @@ import SwiftUI
 
 class SettingsManager: ObservableObject {
     static let shared = SettingsManager()
+    
     @Published var panels: [PanelSetting] = []
     @Published var isLoaded = false
     @Published var categories: [String] = ["School", "Work", "Personal"]

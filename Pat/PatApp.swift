@@ -22,6 +22,19 @@ struct PatApp: App {
                     VerifyEmailView()
                         .environmentObject(authState)
                         .transition(.opacity)
+                } else if !settingsManager.isLoaded {
+                    LoadingView()
+                        .transition(.opacity)
+                        .task {
+                            do {
+                                try await settingsManager.loadConfig()
+                            } catch {
+                                print("settings load error: \(error)")
+                                await MainActor.run {
+                                    authState.signOut()
+                                }
+                            }
+                        }
                 } else {
                     HomeView()
                         .environmentObject(authState)
@@ -32,6 +45,7 @@ struct PatApp: App {
             .animation(.easeOut(duration: 0.3), value: authState.isLoading)
             .animation(.easeOut(duration: 0.3), value: authState.isAuthenticated)
             .animation(.easeOut(duration: 0.3), value: authState.isEmailVerified)
+            .animation(.easeOut(duration: 0.3), value: settingsManager.isLoaded)
             .onOpenURL {url in
                 DeepLinkHandler.handleURL(url)
             }
@@ -42,7 +56,7 @@ struct PatApp: App {
                         Task {
                             do {
                                 try await authState.refreshAuth()
-                                if authState.isEmailVerified {
+                                if authState.isEmailVerified && !settingsManager.isLoaded {
                                     try await settingsManager.loadConfig()
                                 }
                             } catch {
@@ -62,29 +76,13 @@ struct PatApp: App {
                 }
             }
             .onChange(of: authState.isAuthenticated, initial: true) { oldValue, newValue in
-                if newValue && authState.isEmailVerified {
+                if newValue && authState.isEmailVerified && settingsManager.isLoaded {
                     socketService.connect()
-                    Task {
-                        do {
-                            try await settingsManager.loadConfig()
-                        } catch {
-                            print("settings load error: \(error)")
-                        }
-                    }
-                } else if oldValue {
-                    socketService.disconnect()
                 }
             }
             .onChange(of: authState.isEmailVerified) { oldValue, newValue in
-                if newValue && authState.isAuthenticated {
+                if newValue && authState.isAuthenticated && settingsManager.isLoaded {
                     socketService.connect()
-                    Task {
-                        do {
-                            try await settingsManager.loadConfig()
-                        } catch {
-                            print("settings load error: \(error)")
-                        }
-                    }
                 }
             }
         }
