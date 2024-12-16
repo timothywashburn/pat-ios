@@ -1,14 +1,29 @@
 import Foundation
 
-struct PersonProperty: Codable {
+struct PersonProperty: Identifiable, Codable {
+    let id: String
     let key: String
     let value: String
+    
+    init(id: String = UUID().uuidString, key: String, value: String) {
+        self.id = id
+        self.key = key
+        self.value = value
+    }
 }
 
-struct PersonNote: Codable {
+struct PersonNote: Identifiable, Codable {
+    let id: String
     let content: String
     let createdAt: Date
     let updatedAt: Date
+    
+    init(id: String = UUID().uuidString, content: String, createdAt: Date = Date(), updatedAt: Date = Date()) {
+        self.id = id
+        self.content = content
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+    }
 }
 
 struct Person: Identifiable, Codable {

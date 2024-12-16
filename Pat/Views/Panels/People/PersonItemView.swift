@@ -27,13 +27,6 @@ struct PersonItemView: View {
                     }
                 }
             }
-            
-            if !person.notes.isEmpty {
-                Text(person.notes[0].content)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .lineLimit(2)
-            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()

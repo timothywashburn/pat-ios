@@ -8,6 +8,7 @@ struct PersonDetailPanel: View {
     @StateObject private var settingsManager = SettingsManager.shared
     
     @State private var isEditing = false
+    @State private var editMode: EditMode = .inactive
     @State private var name: String
     @State private var properties: [PersonProperty]
     @State private var notes: [PersonNote]
@@ -31,41 +32,49 @@ struct PersonDetailPanel: View {
             VStack(spacing: 0) {
                 navigationBar
                 
-                ScrollView {
-                    VStack(spacing: 20) {
-                        if let errorMessage {
-                            Text(errorMessage)
-                                .foregroundColor(.red)
-                                .padding(.horizontal)
-                        }
-                        
-                        nameSection
-                        
-                        if !properties.isEmpty || isEditing {
+                if let errorMessage {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .padding()
+                }
+                
+                List {
+                    nameSection
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                    
+                    if !properties.isEmpty || isEditing {
+                        Section {
                             PersonDetailProperties(
-                                isEditing: isEditing,
                                 properties: $properties,
                                 newPropertyKey: $newPropertyKey,
                                 newPropertyValue: $newPropertyValue,
                                 addProperty: addProperty
                             )
+                            .environment(\.editMode, .constant(isEditing ? .active : .inactive))
                         }
-                        
-                        if !notes.isEmpty || isEditing {
+                    }
+                    
+                    if !notes.isEmpty || isEditing {
+                        Section {
                             PersonDetailNotes(
                                 isEditing: isEditing,
                                 notes: $notes,
                                 newNote: $newNote,
                                 addNote: addNote
                             )
+                            .environment(\.editMode, .constant(isEditing ? .active : .inactive))
                         }
-                        
-                        if isEditing {
+                    }
+                    
+                    if isEditing {
+                        Section {
                             deleteButton
                         }
                     }
-                    .padding(.vertical)
                 }
+                .listStyle(.insetGrouped)
+                .disabled(!isEditing)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(.systemBackground))
@@ -87,7 +96,15 @@ struct PersonDetailPanel: View {
         HStack(spacing: 16) {
             Button {
                 if isEditing {
+                    name = person.name
+                    properties = person.properties
+                    notes = person.notes
+                    newPropertyKey = ""
+                    newPropertyValue = ""
+                    newNote = ""
                     isEditing = false
+                    errorMessage = nil
+                    NotificationCenter.default.post(name: .editingDidEnd, object: nil)
                 } else {
                     withAnimation(.easeOut(duration: 0.2)) {
                         isPresented = false
@@ -108,6 +125,8 @@ struct PersonDetailPanel: View {
                     Button("Save") {
                         Task {
                             await saveChanges()
+                            // Notify child views that editing has ended
+                            NotificationCenter.default.post(name: .editingDidEnd, object: nil)
                         }
                     }
                     .disabled(name.isEmpty)
@@ -134,7 +153,6 @@ struct PersonDetailPanel: View {
                     .font(.title)
             }
         }
-        .padding(.horizontal)
     }
     
     private var deleteButton: some View {
@@ -146,12 +164,7 @@ struct PersonDetailPanel: View {
                 Text("Delete Person")
             }
             .foregroundColor(.red)
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(Color(.systemGray6))
-            .cornerRadius(10)
         }
-        .padding(.horizontal)
     }
     
     private func addProperty() {
@@ -214,4 +227,26 @@ struct PersonDetailPanel: View {
             }
         }
     }
+}
+
+extension Notification.Name {
+    static let editingDidEnd = Notification.Name("editingDidEnd")
+}
+
+#Preview {
+    PersonDetailPanel(
+        person: Person(
+            id: "123",
+            name: "Test Person",
+            properties: [
+                PersonProperty(id: "1", key: "email", value: "test@example.com"),
+                PersonProperty(id: "2", key: "phone", value: "123-456-7890"),
+                PersonProperty(id: "3", key: "address", value: "123 Test St")
+            ],
+            notes: [
+                PersonNote(content: "Test note", createdAt: Date(), updatedAt: Date())
+            ]
+        ),
+        isPresented: .constant(true)
+    )
 }
