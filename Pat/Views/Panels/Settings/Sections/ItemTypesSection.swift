@@ -23,7 +23,6 @@ struct ItemTypesSection: View {
                 .contentShape(Rectangle())
                 .onTapGesture {
                     if editMode?.wrappedValue.isEditing == true {
-                        print("debug: delete triggered for type: \(type)")
                         typeToDelete = type
                     }
                 }

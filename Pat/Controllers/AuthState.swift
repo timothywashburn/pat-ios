@@ -26,7 +26,7 @@ class AuthState: ObservableObject {
     }
     
     func signIn(email: String, password: String) async throws {
-        print("attempting sign in with email: \(email)")
+        print("[auth] signing in with email: \(email)")
         
         let request = NetworkRequest(
             endpoint: "/api/auth/login",
@@ -34,12 +34,9 @@ class AuthState: ObservableObject {
             body: ["email": email, "password": password]
         )
         
-        print("sending login request...")
         let response = try await NetworkManager.shared.perform(request)
-        print("got login response:", response)
         
         let loginData = try extractAuthData(from: response)
-        print("successfully extracted auth data, user: \(loginData.user.name)")
         
         await MainActor.run {
             updateAuthState(user: loginData.user, tokens: loginData.tokens)

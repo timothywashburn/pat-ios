@@ -38,9 +38,6 @@ class PanelController: ObservableObject {
     }
     
     private func updateFromSettings(isInitialLoad: Bool) {
-        print("updating from settings with initialLoad \(isInitialLoad)")
-        print("selecting \(selectedPanel)")
-        
         let oldSettingsVisible = panelSettings[.settings] == true
         
         let settings = SettingsManager.shared.panels
@@ -50,8 +47,6 @@ class PanelController: ObservableObject {
         let newSettingsVisible = panelSettings[.settings] == true
         
         if isInitialLoad {
-            print("visible panels: \(visiblePanels)")
-            print("panelOrder: \(panelOrder)")
             currentPanels = visiblePanels
             if let firstVisible = visiblePanels.first {
                 selectedPanel = firstVisible
