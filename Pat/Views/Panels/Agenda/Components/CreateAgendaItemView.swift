@@ -5,7 +5,7 @@ struct CreateAgendaItemView: View {
     @StateObject private var agendaManager = AgendaManager.getInstance()
     @StateObject private var settingsManager = SettingsManager.shared
     @State private var name: String
-    @State private var date = Date()
+    @State private var date: Date
     @State private var notes = ""
     @State private var urgent = false
     @State private var category: String?
@@ -16,6 +16,7 @@ struct CreateAgendaItemView: View {
     
     init(initialName: String = "", onComplete: ((Bool) -> Void)? = nil) {
         _name = State(initialValue: initialName)
+        _date = State(initialValue: Calendar.endOfDay())
         self.onComplete = onComplete
     }
     
