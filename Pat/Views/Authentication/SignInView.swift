@@ -18,15 +18,21 @@ struct SignInView: View {
                     .font(.system(size: 28, weight: .bold))
                     .padding(.bottom, 30)
                 
-                AuthField(title: "Email",
-                         placeholder: "Enter your email",
-                         isSecure: false,
-                         text: $email)
-                         
-                AuthField(title: "Password",
-                         placeholder: "Enter your password",
-                         isSecure: true,
-                         text: $password)
+                AuthField(
+                    title: "Email",
+                    placeholder: "Enter your email",
+                    keyboardType: .emailAddress,
+                    textContentType: .emailAddress,
+                    text: $email
+                )
+
+                AuthField(
+                    title: "Password",
+                    placeholder: "Enter your password",
+                    isSecure: true,
+                    textContentType: .password,
+                    text: $password
+                )
                 
                 if let errorMessage {
                     Text(errorMessage)

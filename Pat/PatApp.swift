@@ -16,7 +16,6 @@ struct PatApp: App {
                 } else if !authState.isAuthenticated {
                     SignInView()
                         .environmentObject(authState)
-                        .preloadKeyboard()
                         .transition(.opacity)
                 } else if !authState.isEmailVerified {
                     VerifyEmailView()
@@ -38,7 +37,6 @@ struct PatApp: App {
                 } else {
                     HomeView()
                         .environmentObject(authState)
-                        .preloadKeyboard()
                         .transition(.opacity)
                 }
             }

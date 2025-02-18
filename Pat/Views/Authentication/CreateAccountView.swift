@@ -20,25 +20,37 @@ struct CreateAccountView: View {
                 .font(.system(size: 28, weight: .bold))
                 .padding(.bottom, 30)
             
-            AuthField(title: "Name",
-                     placeholder: "Enter your name",
-                     isSecure: false,
-                     text: $name)
+            AuthField(
+                title: "Name",
+                placeholder: "Enter your name",
+                keyboardType: .default,
+                textContentType: .name,
+                text: $name
+            )
             
-            AuthField(title: "Email",
-                     placeholder: "Enter your email",
-                     isSecure: false,
-                     text: $email)
+            AuthField(
+                title: "Email",
+                placeholder: "Enter your email",
+                keyboardType: .emailAddress,
+                textContentType: .emailAddress,
+                text: $email
+            )
                      
-            AuthField(title: "Password",
-                     placeholder: "Enter your password",
-                     isSecure: true,
-                     text: $password)
+            AuthField(
+                title: "Password",
+                placeholder: "Enter your password",
+                isSecure: true,
+                textContentType: .newPassword,
+                text: $password
+            )
                      
-            AuthField(title: "Confirm Password",
-                     placeholder: "Confirm your password",
-                     isSecure: true,
-                     text: $confirmPassword)
+            AuthField(
+                title: "Confirm Password",
+                placeholder: "Confirm your password",
+                isSecure: true,
+                textContentType: .newPassword,
+                text: $confirmPassword
+            )
             
             if password != confirmPassword && !confirmPassword.isEmpty {
                 Text("Passwords do not match")
